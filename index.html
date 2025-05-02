@@ -2,266 +2,452 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TapSwap Clone</title>
-    <!-- Telegram Web App SDK -->
+    <!-- Include Telegram WebApp script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Reset and Base Styles */
         :root {
-            --tg-theme-bg-color: var(--tg-theme-bg-color, #ffffff);
-            --tg-theme-text-color: var(--tg-theme-text-color, #000000);
-            --tg-theme-hint-color: var(--tg-theme-hint-color, #999999);
-            --tg-theme-link-color: var(--tg-theme-link-color, #2481cc);
-            --tg-theme-button-color: var(--tg-theme-button-color, #2481cc);
-            --tg-theme-button-text-color: var(--tg-theme-button-text-color, #ffffff);
-            --tg-theme-secondary-bg-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            --bg-color-light: #f8f9fa;
+            --text-color-light: #212529;
+            --primary-color-light: #007bff;
+            --secondary-color-light: #6c757d;
+            --card-bg-light: #ffffff;
+            --nav-bg-light: #e9ecef;
+            --nav-icon-light: #495057;
+            --nav-icon-active-light: #007bff;
+            --energy-bar-bg-light: #e9ecef;
+            --energy-bar-fill-light: linear-gradient(90deg, #ffc107, #ff9800);
+            --cat-bg-light: #d1e7ff;
+            --button-bg-light: #007bff;
+            --button-text-light: #ffffff;
+            --score-color-light: #28a745;
 
-            --app-primary-color: #fbc02d; /* Yellowish */
-            --app-secondary-color: #ffecb3;
-            --app-energy-color: #4caf50; /* Green */
-            --app-energy-bg-color: #e0e0e0;
+            --bg-color-dark: #1a1a1a;
+            --text-color-dark: #e0e0e0;
+            --primary-color-dark: #4dabf7;
+            --secondary-color-dark: #adb5bd;
+            --card-bg-dark: #2c2c2c;
+            --nav-bg-dark: #212121;
+            --nav-icon-dark: #b0b0b0;
+            --nav-icon-active-dark: #4dabf7;
+            --energy-bar-bg-dark: #3a3a3a;
+            --energy-bar-fill-dark: linear-gradient(90deg, #ffecb3, #ffcc80);
+            --cat-bg-dark: #303f9f;
+            --button-bg-dark: #4dabf7;
+            --button-text-dark: #121212;
+            --score-color-dark: #66bb6a;
+
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --transition-speed: 0.3s;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         html, body {
             height: 100%;
-            width: 100%;
-            overflow: hidden; /* Prevent scrolling */
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            overscroll-behavior: none; /* Prevent pull-to-refresh */
+            overflow: hidden; /* Prevent scrolling on the body */
+            font-family: var(--font-main);
         }
 
-        #app-container {
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        body[data-theme="light"] {
+            --bg-color: var(--bg-color-light);
+            --text-color: var(--text-color-light);
+            --primary-color: var(--primary-color-light);
+            --secondary-color: var(--secondary-color-light);
+            --card-bg: var(--card-bg-light);
+            --nav-bg: var(--nav-bg-light);
+            --nav-icon: var(--nav-icon-light);
+            --nav-icon-active: var(--nav-icon-active-light);
+            --energy-bar-bg: var(--energy-bar-bg-light);
+            --energy-bar-fill: var(--energy-bar-fill-light);
+            --cat-bg: var(--cat-bg-light);
+            --button-bg: var(--button-bg-light);
+            --button-text: var(--button-text-light);
+            --score-color: var(--score-color-light);
+        }
+
+        body[data-theme="dark"] {
+            --bg-color: var(--bg-color-dark);
+            --text-color: var(--text-color-dark);
+            --primary-color: var(--primary-color-dark);
+            --secondary-color: var(--secondary-color-dark);
+            --card-bg: var(--card-bg-dark);
+            --nav-bg: var(--nav-bg-dark);
+            --nav-icon: var(--nav-icon-dark);
+            --nav-icon-active: var(--nav-icon-active-dark);
+            --energy-bar-bg: var(--energy-bar-bg-dark);
+            --energy-bar-fill: var(--energy-bar-fill-dark);
+            --cat-bg: var(--cat-bg-dark);
+            --button-bg: var(--button-bg-dark);
+            --button-text: var(--button-text-dark);
+            --score-color: var(--score-color-dark);
+        }
+
+        .app-container {
             display: flex;
             flex-direction: column;
             height: 100vh; /* Full viewport height */
-            width: 100%;
-            max-width: 600px; /* Max width for larger screens */
-            margin: 0 auto; /* Center on larger screens */
-            background-color: var(--tg-theme-secondary-bg-color); /* Slightly different bg for app area */
         }
 
-        /* Main Content Area */
-        #main-content {
+        .content-area {
             flex-grow: 1;
-            overflow-y: auto; /* Allow scrolling within content if needed */
+            overflow-y: auto; /* Allow scrolling within content */
+            overflow-x: hidden;
             padding: 20px;
-            position: relative; /* Needed for tap feedback */
+            padding-bottom: 80px; /* Space for bottom nav */
         }
 
-        .section {
-            display: none; /* Hide sections by default */
-            animation: fadeIn 0.3s ease-in-out;
+        .page {
+            display: none; /* Hide pages by default */
+            animation: fadeIn 0.5s ease-in-out;
         }
 
-        .section.active {
+        .page.active {
             display: block;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Navigation */
-        #navigation {
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 10px 0;
-            border-top: 1px solid var(--tg-theme-hint-color);
-            background-color: var(--tg-theme-bg-color);
-            flex-shrink: 0; /* Prevent shrinking */
+            height: 65px;
+            background-color: var(--nav-bg);
+            border-top: 1px solid var(--secondary-color-light); /* Subtle border */
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            transition: background-color var(--transition-speed);
+            z-index: 1000;
+        }
+
+        body[data-theme="dark"] .bottom-nav {
+             border-top: 1px solid var(--secondary-color-dark);
         }
 
         .nav-button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-hint-color);
-            cursor: pointer;
-            font-size: 14px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: background-color 0.2s, color 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--nav-icon);
+            font-size: 10px;
+            padding: 8px 5px;
+            cursor: pointer;
+            flex-grow: 1;
+            text-align: center;
+            transition: color var(--transition-speed);
+            outline: none; /* Remove focus outline */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+
+        .nav-button .icon {
+            font-size: 22px;
+            margin-bottom: 4px;
         }
 
         .nav-button.active {
-            color: var(--tg-theme-link-color);
+            color: var(--nav-icon-active);
             font-weight: bold;
         }
 
-        .nav-button:hover:not(.active) {
-            background-color: rgba(0, 0, 0, 0.05);
+        /* Page Specific Styles */
+
+        /* Profile Page */
+        #profile-page h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        .theme-switcher {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background-color var(--transition-speed);
+        }
+        .theme-switcher span {
+            font-size: 16px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
         }
 
-        .nav-icon {
-            font-size: 20px; /* Adjust as needed */
-        }
-
-        /* Tap Section */
-        #tap-section {
+        /* Tap Page */
+        #tap-page {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between; /* Pushes elements apart */
-            height: 100%; /* Take full height of main-content */
-            padding-bottom: 30px; /* Space above energy bar */
+            justify-content: space-around; /* Space out elements */
+            height: calc(100vh - 65px - 40px); /* Full height minus nav and padding */
+            min-height: 450px; /* Ensure minimum height on smaller screens */
+            text-align: center;
         }
 
-        .points-display {
-            font-size: 36px;
+        .score-container {
+            margin-bottom: 15px;
+            font-size: 28px;
             font-weight: bold;
-            color: var(--app-primary-color);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: var(--score-color);
+             display: flex;
+             align-items: center;
+             justify-content: center;
+        }
+         .score-icon {
+             width: 30px;
+             height: 30px;
+             margin-right: 10px;
+             vertical-align: middle;
+         }
+
+
+        .cat-container {
+            position: relative;
+            width: 200px; /* Adjust size as needed */
+            height: 200px;
+            margin: 20px auto;
         }
 
-        .points-icon {
-            width: 30px;
-            height: 30px;
-        }
-
-        #cat-container {
-            flex-grow: 1; /* Takes available space */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        #tap-cat {
             width: 100%;
-        }
-
-        #cat-image {
-            width: 180px; /* Adjust size as needed */
-            height: 180px;
+            height: 100%;
+            background-color: var(--cat-bg);
             border-radius: 50%;
-            cursor: pointer;
-            user-select: none; /* Prevent image selection */
-            -webkit-user-drag: none; /* Prevent image dragging */
-            transition: transform 0.1s ease-out;
-            background-color: var(--app-secondary-color);
-            border: 4px solid var(--app-primary-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 80px; /* Cat emoji size */
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            -webkit-user-drag: none; /* Prevent image dragging */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            transition: transform 0.1s ease, background-color var(--transition-speed);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        #cat-image:active {
+        #tap-cat:active {
             transform: scale(0.95);
         }
 
-        .energy-container {
-            width: 90%;
-            max-width: 350px;
-            text-align: center;
-            margin-top: 20px; /* Space below cat */
+        #tap-cat svg {
+            width: 60%;
+            height: 60%;
+            fill: var(--button-text); /* Use button text color for contrast */
+            transition: fill var(--transition-speed);
+        }
+        body[data-theme="dark"] #tap-cat svg {
+             fill: var(--button-text-dark);
         }
 
-        .energy-label {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color);
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
+
+        .tap-feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            opacity: 0;
+            animation: floatUp 0.6s ease-out forwards;
+            pointer-events: none; /* Allow clicks to go through */
         }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); } /* Move up and fade out */
+        }
+
+
+        .energy-container {
+            width: 90%;
+            max-width: 400px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .energy-label {
+             font-size: 14px;
+             color: var(--secondary-color);
+             margin-bottom: 8px;
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+        }
+         .energy-icon {
+             font-size: 18px;
+             vertical-align: middle;
+             margin-right: 5px;
+         }
 
         #energy-bar-container {
             width: 100%;
             height: 15px;
-            background-color: var(--app-energy-bg-color);
+            background-color: var(--energy-bar-bg);
             border-radius: 10px;
             overflow: hidden;
-            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color var(--transition-speed);
         }
 
         #energy-bar {
             height: 100%;
-            width: 100%; /* Default full */
-            background-color: var(--app-energy-color);
+            width: 100%; /* Initial width */
+            background: var(--energy-bar-fill);
             border-radius: 10px;
-            transition: width 0.2s linear; /* Smooth transition */
-            position: absolute;
-            left: 0;
-            top: 0;
+            transition: width 0.5s ease-out, background var(--transition-speed); /* Smooth transition for width */
         }
 
-        /* Tap Feedback */
-        .tap-feedback {
-            position: absolute;
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--app-primary-color);
-            user-select: none;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
-        }
-
-        @keyframes floatUp {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-50px); opacity: 0; }
-        }
-
-        /* Profile Section */
-        #profile-section p {
-            margin-bottom: 10px;
-            font-size: 16px;
-            word-wrap: break-word;
-        }
-         #profile-section strong {
-             color: var(--tg-theme-link-color);
-         }
-
-        /* Task & Withdraw Sections */
+        /* Task & Withdraw Pages */
         .placeholder-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100vh - 150px); /* Adjust height as needed */
             text-align: center;
-            margin-top: 50px;
-            color: var(--tg-theme-hint-color);
-            font-size: 18px;
+            color: var(--secondary-color);
         }
+
+        .placeholder-content .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.7;
+        }
+
+        .placeholder-content h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .placeholder-content p {
+            font-size: 14px;
+        }
+
+         /* Utility Classes */
+         .button {
+             display: inline-block;
+             padding: 10px 20px;
+             background-color: var(--button-bg);
+             color: var(--button-text);
+             border: none;
+             border-radius: 8px;
+             font-size: 16px;
+             font-weight: bold;
+             cursor: pointer;
+             text-align: center;
+             transition: background-color var(--transition-speed), color var(--transition-speed), transform 0.1s ease;
+             margin-top: 20px;
+         }
+         .button:active {
+             transform: scale(0.98);
+         }
 
     </style>
 </head>
-<body>
-    <div id="app-container">
-        <div id="main-content">
-            <!-- Profile Section -->
-            <div id="profile-section" class="section">
-                <h2>Profile</h2>
-                <p><strong>User ID:</strong> <span id="user-id">Loading...</span></p>
-                <p><strong>First Name:</strong> <span id="user-first-name">Loading...</span></p>
-                <p><strong>Last Name:</strong> <span id="user-last-name">Loading...</span></p>
-                <p><strong>Username:</strong> <span id="user-username">Loading...</span></p>
-                <p><strong>Language:</strong> <span id="user-language">Loading...</span></p>
-                <p><strong>Is Premium:</strong> <span id="user-premium">Loading...</span></p>
+<body data-theme="light">
+
+    <div class="app-container">
+        <main class="content-area">
+            <!-- Profile Page -->
+            <div id="profile-page" class="page">
+                <h2>Profile & Settings</h2>
+                 <div class="placeholder-content">
+                    <span class="icon">👤</span>
+                    <h3>User Profile</h3>
+                    <p>User details and stats will appear here.</p>
+                 </div>
+                 <div class="theme-switcher">
+                     <span>Dark Mode</span>
+                     <label class="toggle-switch">
+                       <input type="checkbox" id="theme-toggle-checkbox">
+                       <span class="slider"></span>
+                     </label>
+                   </div>
             </div>
 
-            <!-- Tap Section -->
-            <div id="tap-section" class="section active">
-                <div class="points-display">
-                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='50%' dominant-baseline='middle' text-anchor='middle' x='50%' font-size='90'%3E💰%3C/text%3E%3C/svg%3E" alt="Coin" class="points-icon">
-                     <span id="points">0</span>
+            <!-- Tap Page -->
+            <div id="tap-page" class="page active">
+                <div class="score-container">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEwQzIxIDE1LjUyMjggMTYuNTIyOCAyMCAxMSAyMEMxMC40IDE5Ljk5OTkgOS44MTgxOCAxOS45NDk0IDkuMjUgMTkuODU3MUwxOSA4LjEyNUMxOS40NDEzIDguMzcxNjIgMTkuODI1NyA4LjUxNzYxIDIwLjIzNTcgOC43MDU3MUMyMC43Mzk5IDkuMDU0MDcgMjEgOS41MTA3MiAyMSAxMFoiIGZpbGw9IiNGRkMxMDciLz4KPHBhdGggZD0iTTMgMTBDMyA0LjQ3NzE1IDcuNDc3MTUgMCAxMyAwQzE0LjY4OTMgMCAxNi4yNjI5IDAuNDMzNzIgMTcuNjQyOSA MS4xODc1TDUgMTUuODMxQzQuMDYyOTIgMTUuMjQ3OCA0IDE0LjE1NjcgNCAxM0M0IDExLjYyNDUgNC4zNTc5NyAxMC4zNTkgNS4wMDAwMiA5LjI0OTk4QzQuMzYwODUgOS41MDI5NCAzLjggOS42OTY4NyAzIDguNUMzIDggMyAxMiAzIDEwWiIgZmlsbD0iI0ZGRkM0MCIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExIDRDNy4xMzQwMSA0IDQgNy4xMzQwMSA0IDEzQzQgMTQuMTU2NyA0LjA2MjkyIDE1LjI0NzggNSAxNS44MzFMNy4xNDI4NiAxMy4xNDI5QzcuMDUwNTUgMTIuMTgxOCA3IDExLjEzMTcgNyAxMUM3IDguNzgwMzYgOC4wNTY0NyA2Ljc4ODY4IDkuNzQ4NjIgNS40NDI4OEMxMC4yMjY5IDUuMDU5MTMgMTAuNjA1MyA1IDExIDVDMTIuNzY5MyA1IDE0LjM1MzggNS42NTQ4OCAxNS41NTcxIDYuODU3MTRMMTcuNjQyOSAxLjE4NzVDMTYuMjYyOSAwLjQzMzcyIDE0LjY4OTMgMCAxMyAwQzcuNDc3MTUgMCAzIDQuNDc3MTUgMyAxMEMzIDEyIDMgOCAzIDguNUMzLjggOS42OTY4NyA0LjM2MDg1IDkuNTAyOTQgNS4wMDAwMiA5LjI0OTk4QzQuMzU3OTcgMTAuMzU5IDQgMTEuNjI0NSA0IDEzQzQgMTAgNy4xMzQwMSA0IDExIDRaIiBmaWxsPSIjRkZBNjAwIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTEzIDI0QzE4LjUyMjggMjQgMjMgMTkuNTIyOCAyMyAxNEMyMyAxMi4zMTA3IDIyLjU2NjMgMTAuNzM3MSAyMS44MTI1IDkuMzU3MTJMOS4yNSAxOS44NTcxQzkuODE4MTggMTkuOTQ5NCAxMC40IDE5Ljk5OTkgMTEgMjBDMTQuODY1OSAyMCAxNy44Njg4IDE3Ljg1NzEgMTkuNzUxNCAxNC41NTcxQzIwLjQ0MDggMTMuMjE1IDIxIDEyLjE3OTYgMjEgMThDMTggMTggMTMgMjQgMTMgMjRaIiBmaWxsPSIjRkZBNjAwIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTMgMjBDMTAuNDE4MiAyMCA4LjE4MTgyIDE4LjQwOSA3IDE2QzggMTYgMTEgMTkgMTUgMTVDMTUgMTEgMTIgOCA3IDhDNyA4IDQgOS41IDQgMTNDNCAxNC4xNzM1IDQuMzQwMzYgMTUuMjQ4MiA1IDE1LjgzMUw5LjI1IDE5Ljg1NzFDMTAuMTgxOCAyMS45NDk0IDEwLjQgMjIgMTEgMjJDMTIuNzY5MyAyMiAxNC4zNTM4IDIxLjM0NTIgMTUuNTU3MSAyMC4xNDI5QzE0Ljc4ODYgMjAuNzk1NyAxNC4zNjYxIDIwLjQ5NDQgMTMgMjBaIiBmaWxsPSIjRkZDNTAwIi8+Cjwvc3ZnPgo=" alt="Score" class="score-icon">
+                    <span id="score-display">0</span>
                 </div>
-                <div id="cat-container">
-                    <div id="cat-image" role="button" aria-label="Tap the cat">
-                        <span>😼</span> 
+
+                <div class="cat-container">
+                    <div id="tap-cat" role="button" aria-label="Tap the cat">
+                        <!-- Embedded SVG Cat -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.41 6.59c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41-.38-.39-1.02-.39-1.41 0zm-6.82 0c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41-.39-.39-1.03-.39-1.41 0zM12 18c-2.28 0-4.38-.9-5.96-2.39.32-.06.65-.1.99-.1.89 0 1.74.2 2.5.55.78.36 1.67.55 2.59.55s1.81-.19 2.59-.55c.76-.35 1.61-.55 2.5-.55.34 0 .67.04.99.1C16.38 17.1 14.28 18 12 18z"/>
+                        </svg>
                     </div>
+                     <div id="tap-feedback-container"></div>
                 </div>
+
                 <div class="energy-container">
                     <div class="energy-label">
-                        <span>⚡️ Energy</span>
-                        <span><span id="energy">100</span> / <span id="max-energy">100</span></span>
+                       <span><span class="energy-icon">⚡</span>Energy</span>
+                       <span id="energy-level">100 / 100</span>
                     </div>
                     <div id="energy-bar-container">
                         <div id="energy-bar"></div>
@@ -269,320 +455,295 @@
                 </div>
             </div>
 
-            <!-- Task Section -->
-            <div id="task-section" class="section">
-                <div class="placeholder-content">
-                    <h2>Tasks</h2>
-                    <p>🚀 Coming Soon! 🚀</p>
-                    <p>Complete tasks to earn more points.</p>
-                </div>
-            </div>
-
-            <!-- Withdraw Section -->
-            <div id="withdraw-section" class="section">
+            <!-- Task Page -->
+            <div id="task-page" class="page">
                  <div class="placeholder-content">
-                    <h2>Withdraw</h2>
-                    <p>💸 Coming Soon! 💸</p>
-                    <p>Withdraw your earned points.</p>
-                </div>
+                    <span class="icon">✅</span>
+                    <h3>Tasks</h3>
+                    <p>Complete tasks to earn more points!</p>
+                    <button class="button" onclick="alert('Task system coming soon!')">View Tasks</button>
+                 </div>
             </div>
-        </div>
 
-        <!-- Navigation Bar -->
-        <nav id="navigation">
-            <button class="nav-button" data-section="profile">
-                <span class="nav-icon">👤</span>
-                <span>Profile</span>
+            <!-- Withdraw Page -->
+            <div id="withdraw-page" class="page">
+                 <div class="placeholder-content">
+                    <span class="icon">💰</span>
+                    <h3>Withdraw</h3>
+                    <p>Withdrawal options will be available here.</p>
+                    <button class="button" onclick="alert('Withdrawal feature coming soon!')">Withdraw Funds</button>
+                 </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-button" data-target="profile-page">
+                <span class="icon">👤</span> Profile
             </button>
-            <button class="nav-button active" data-section="tap">
-                <span class="nav-icon">👆</span>
-                <span>Tap</span>
+            <button class="nav-button active" data-target="tap-page">
+                <span class="icon">🐾</span> Tap
             </button>
-            <button class="nav-button" data-section="task">
-                <span class="nav-icon">📋</span>
-                <span>Tasks</span>
+            <button class="nav-button" data-target="task-page">
+                <span class="icon">✅</span> Task
             </button>
-            <button class="nav-button" data-section="withdraw">
-                 <span class="nav-icon">💳</span>
-                 <span>Withdraw</span>
+            <button class="nav-button" data-target="withdraw-page">
+                <span class="icon">💰</span> Withdraw
             </button>
         </nav>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Telegram WebApp Initialization ---
+            const tg = window.Telegram.WebApp;
+            tg.ready(); // Notify Telegram the app is ready
+            tg.expand(); // Expand the webapp to full height
 
-        // --- DOM Elements ---
-        const pointsDisplay = document.getElementById('points');
-        const energyDisplay = document.getElementById('energy');
-        const maxEnergyDisplay = document.getElementById('max-energy');
-        const energyBar = document.getElementById('energy-bar');
-        const catImage = document.getElementById('cat-image');
-        const sections = document.querySelectorAll('.section');
-        const navButtons = document.querySelectorAll('.nav-button');
-        const mainContent = document.getElementById('main-content');
+            // --- DOM Elements ---
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page');
+            const tapCat = document.getElementById('tap-cat');
+            const scoreDisplay = document.getElementById('score-display');
+            const energyLevelDisplay = document.getElementById('energy-level');
+            const energyBar = document.getElementById('energy-bar');
+            const tapFeedbackContainer = document.getElementById('tap-feedback-container');
+            const themeToggle = document.getElementById('theme-toggle-checkbox');
+            const body = document.body;
 
-        // --- Game State ---
-        const MAX_ENERGY = 100; // Max energy capacity
-        const ENERGY_REGEN_RATE = 1; // Energy points per second
-        const POINTS_PER_TAP = 1; // Points earned per tap
-        const LOCAL_STORAGE_KEY = 'tapSwapCloneState';
+            // --- Game State ---
+            const defaultState = {
+                score: 0,
+                energy: 100,
+                maxEnergy: 100,
+                energyPerTap: 1,
+                energyRefillRate: 1, // energy points per second
+                lastUpdate: Date.now(),
+                theme: 'light',
+                activePage: 'tap-page'
+            };
+            let gameState = {};
 
-        let gameState = {
-            points: 0,
-            energy: MAX_ENERGY,
-            maxEnergy: MAX_ENERGY,
-            lastUpdated: Date.now() // Timestamp for energy regen calculation
-        };
-
-        // --- Functions ---
-
-        function loadGameState() {
-            const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (savedState) {
+            // --- Local Storage Functions ---
+            function saveGameState() {
+                gameState.lastUpdate = Date.now(); // Always update timestamp before saving
                 try {
-                    const parsedState = JSON.parse(savedState);
-                    // Basic validation
-                    if (typeof parsedState.points === 'number' && typeof parsedState.energy === 'number' && typeof parsedState.lastUpdated === 'number') {
-                        gameState = parsedState;
-                        // Ensure energy doesn't exceed max on load (e.g., if maxEnergy changed)
-                        gameState.maxEnergy = MAX_ENERGY; // Use current MAX_ENERGY const
-                        gameState.energy = Math.min(gameState.energy, gameState.maxEnergy);
-                    } else {
-                        console.warn("Invalid game state found in localStorage. Using defaults.");
-                        resetGameState(); // Use defaults if format is wrong
+                    localStorage.setItem('tapSwapGameState', JSON.stringify(gameState));
+                    // console.log('Game state saved:', gameState);
+                } catch (e) {
+                    console.error("Error saving game state to localStorage:", e);
+                }
+            }
+
+            function loadGameState() {
+                let loadedState = null;
+                try {
+                    const storedState = localStorage.getItem('tapSwapGameState');
+                    if (storedState) {
+                        loadedState = JSON.parse(storedState);
+                        // console.log('Game state loaded:', loadedState);
                     }
-                } catch (error) {
-                    console.error("Failed to parse game state from localStorage:", error);
-                    resetGameState(); // Use defaults on parsing error
+                } catch (e) {
+                    console.error("Error loading game state from localStorage:", e);
+                    localStorage.removeItem('tapSwapGameState'); // Clear corrupted data
                 }
-            } else {
-                 // Set initial state if nothing is saved
-                 resetGameState();
+
+                // Merge loaded state with defaults to ensure all keys exist
+                gameState = { ...defaultState, ...loadedState };
+
+                // Calculate offline energy regeneration
+                const now = Date.now();
+                const timeDiffSeconds = Math.floor((now - gameState.lastUpdate) / 1000);
+                const energyToRefill = timeDiffSeconds * gameState.energyRefillRate;
+
+                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + energyToRefill);
+                gameState.lastUpdate = now; // Update last update time after calculation
+
+                // console.log(`Offline for ${timeDiffSeconds}s, refilled ${energyToRefill} energy.`);
             }
-             // Always calculate offline energy regeneration on load
-             regenerateEnergy(true); // Pass true to indicate it's the initial load calculation
-             updateUI(); // Update UI after loading/calculating
-        }
 
-        function saveGameState() {
-            gameState.lastUpdated = Date.now(); // Always update timestamp on save
-            try {
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameState));
-            } catch (error) {
-                console.error("Failed to save game state to localStorage:", error);
-                 // Potentially alert the user if storage is full or blocked
-                 tg.showAlert("Could not save game progress. Storage might be full or disabled.");
+            // --- UI Update Functions ---
+            function updateScoreUI() {
+                scoreDisplay.textContent = formatScore(gameState.score);
             }
-        }
 
-         function resetGameState() {
-             gameState = {
-                 points: 0,
-                 energy: MAX_ENERGY,
-                 maxEnergy: MAX_ENERGY,
-                 lastUpdated: Date.now()
-             };
-             saveGameState(); // Save the reset state
-         }
+            function updateEnergyUI() {
+                const energyPercentage = (gameState.energy / gameState.maxEnergy) * 100;
+                energyBar.style.width = `${energyPercentage}%`;
+                energyLevelDisplay.textContent = `${Math.floor(gameState.energy)} / ${gameState.maxEnergy}`;
+            }
 
-        function updateUI() {
-            pointsDisplay.textContent = Math.floor(gameState.points).toLocaleString(); // Format points nicely
-            energyDisplay.textContent = Math.floor(gameState.energy);
-            maxEnergyDisplay.textContent = gameState.maxEnergy;
-            const energyPercentage = (gameState.energy / gameState.maxEnergy) * 100;
-            energyBar.style.width = `${energyPercentage}%`;
-        }
+             function formatScore(num) {
+                // Simple number formatting (e.g., 1,000,000)
+                return Math.floor(num).toLocaleString('en-US');
+             }
 
-        function showSection(sectionId) {
-            sections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === sectionId + '-section') {
-                    section.classList.add('active');
+            function setActivePage(pageId) {
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                    if (page.id === pageId) {
+                        page.classList.add('active');
+                    }
+                });
+
+                navButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.getAttribute('data-target') === pageId) {
+                        button.classList.add('active');
+                    }
+                });
+                gameState.activePage = pageId;
+                // No need to save state on page change unless crucial
+                // saveGameState();
+            }
+
+             function applyTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                themeToggle.checked = (theme === 'dark');
+                gameState.theme = theme;
+                saveGameState(); // Save theme preference
+             }
+
+
+            // --- Game Logic ---
+            function handleTap() {
+                if (gameState.energy >= gameState.energyPerTap) {
+                    // Decrease energy
+                    gameState.energy -= gameState.energyPerTap;
+                    if (gameState.energy < 0) gameState.energy = 0; // Ensure energy doesn't go negative
+
+                    // Increase score
+                    const scoreEarned = 1; // Can be dynamic later (boosts, etc.)
+                    gameState.score += scoreEarned;
+
+                    // Update UI
+                    updateScoreUI();
+                    updateEnergyUI();
+
+                    // Show visual feedback
+                    showTapFeedback(scoreEarned);
+
+                    // Save state (consider debouncing if taps are extremely rapid)
+                    saveGameState();
+                } else {
+                    // Optional: Indicate no energy (e.g., shake animation, message)
+                    // console.log("Not enough energy!");
+                    tapCat.style.animation = 'shake 0.3s ease-in-out';
+                    setTimeout(() => {
+                        tapCat.style.animation = '';
+                    }, 300);
                 }
-            });
-
-            navButtons.forEach(button => {
-                button.classList.remove('active');
-                if (button.dataset.section === sectionId) {
-                    button.classList.add('active');
-                }
-            });
-             // Scroll to top of the section when switching
-             mainContent.scrollTop = 0;
-        }
-
-        function handleTap(event) {
-            if (gameState.energy >= POINTS_PER_TAP) {
-                gameState.points += POINTS_PER_TAP;
-                gameState.energy -= POINTS_PER_TAP;
-                gameState.lastUpdated = Date.now(); // Update time on tap for accurate regen
-
-                updateUI();
-                saveGameState(); // Save state after successful tap
-
-                // Show visual feedback
-                showTapFeedback(event.clientX, event.clientY);
-
-                // Haptic feedback (if supported and enabled)
-                 try {
-                    tg.HapticFeedback.impactOccurred('light'); // 'light', 'medium', 'heavy'
-                 } catch (e) { /* Ignore if not supported */ }
-
-            } else {
-                // Optional: Indicate no energy (e.g., shake effect or disabled look)
-                catImage.style.animation = 'shake 0.3s ease-in-out';
-                setTimeout(() => { catImage.style.animation = ''; }, 300);
-                 try {
-                    tg.HapticFeedback.notificationOccurred('error');
-                 } catch (e) { /* Ignore */ }
             }
-        }
 
-        // Function to show the "+1" floating text
-        function showTapFeedback(x, y) {
-            const feedback = document.createElement('div');
-            feedback.textContent = `+${POINTS_PER_TAP}`;
-            feedback.classList.add('tap-feedback');
+            function showTapFeedback(amount) {
+                const feedback = document.createElement('div');
+                feedback.className = 'tap-feedback';
+                feedback.textContent = `+${amount}`;
+                tapFeedbackContainer.appendChild(feedback);
 
-            // Position relative to the viewport initially
-            feedback.style.left = `${x}px`;
-            feedback.style.top = `${y}px`;
+                // Remove the feedback element after the animation finishes
+                setTimeout(() => {
+                    feedback.remove();
+                }, 600); // Match animation duration
+            }
 
-             // Adjust position to be relative to the main content area
-             const rect = mainContent.getBoundingClientRect();
-             feedback.style.left = `${x - rect.left}px`;
-             feedback.style.top = `${y - rect.top + mainContent.scrollTop}px`; // Account for scroll
+             // Add shake animation CSS if needed
+             const styleSheet = document.styleSheets[0];
+             styleSheet.insertRule(`
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  25% { transform: translateX(-3px); }
+                  75% { transform: translateX(3px); }
+                }
+            `, styleSheet.cssRules.length);
 
-            mainContent.appendChild(feedback);
+            function refillEnergy() {
+                const now = Date.now();
+                const timeDiffSeconds = (now - gameState.lastUpdate) / 1000;
 
-            // Remove the element after animation
-            feedback.addEventListener('animationend', () => {
-                feedback.remove();
-            });
-        }
+                if (gameState.energy < gameState.maxEnergy) {
+                    const energyToRefill = timeDiffSeconds * gameState.energyRefillRate;
+                    const previousEnergy = gameState.energy;
+                    gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + energyToRefill);
 
-        function regenerateEnergy(isInitialLoad = false) {
-            const now = Date.now();
-            const elapsedSeconds = (now - gameState.lastUpdated) / 1000;
-
-            if (elapsedSeconds > 0 && gameState.energy < gameState.maxEnergy) {
-                const energyToRegen = elapsedSeconds * ENERGY_REGEN_RATE;
-                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + energyToRegen);
-                 // Only update lastUpdated if energy actually changed or on initial load
-                 // to prevent constant timestamp updates when full
-                 if (energyToRegen > 0 || isInitialLoad) {
-                    gameState.lastUpdated = now;
+                    // Only update UI and save if energy actually changed significantly
+                    if (Math.floor(gameState.energy) > Math.floor(previousEnergy)) {
+                         updateEnergyUI();
+                         // Update lastUpdate only when energy is refilled to avoid compounding small fractions
+                         gameState.lastUpdate = now;
+                         saveGameState(); // Save state when energy visibly changes
+                    }
+                }
+                 // If energy is full, still update the timestamp to prevent large offline calc later
+                 if (gameState.energy >= gameState.maxEnergy) {
+                      gameState.lastUpdate = now;
                  }
 
-                updateUI();
-                 // Save less frequently during regeneration, maybe only when it hits max?
-                 // Or rely on saving during taps/navigation/unload.
-                 // Let's save if it reached max energy during this tick.
-                 if (gameState.energy === gameState.maxEnergy && !isInitialLoad) {
-                     // saveGameState(); // Decide if this frequent save is needed
-                 }
-            } else if (gameState.energy >= gameState.maxEnergy && !isInitialLoad) {
-                 // If energy is already full, just update the timestamp to prevent
-                 // large elapsed times if the user leaves it open while full.
-                 gameState.lastUpdated = now;
             }
-        }
 
-        function displayUserInfo() {
-            const user = tg.initDataUnsafe?.user;
-            if (user) {
-                document.getElementById('user-id').textContent = user.id || 'N/A';
-                document.getElementById('user-first-name').textContent = user.first_name || 'N/A';
-                document.getElementById('user-last-name').textContent = user.last_name || 'N/A';
-                document.getElementById('user-username').textContent = user.username ? `@${user.username}` : 'N/A';
-                document.getElementById('user-language').textContent = user.language_code || 'N/A';
-                document.getElementById('user-premium').textContent = user.is_premium ? 'Yes' : 'No';
-            } else {
-                 // Handle cases where user data might not be available
-                 ['user-id', 'user-first-name', 'user-last-name', 'user-username', 'user-language', 'user-premium']
-                    .forEach(id => { document.getElementById(id).textContent = 'Error loading'; });
-                 tg.showAlert("Could not load user data. Please try restarting the app.");
-            }
-        }
-
-        function initializeApp() {
-            tg.ready(); // Inform Telegram the app is ready
-            tg.expand(); // Expand the web app to full height
-
-             // Apply Telegram theme colors
-             document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color);
-             document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color);
-             document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color);
-             document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color);
-             document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color);
-             document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color);
-             document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f1f1f1'); // Fallback for secondary bg
-
-
-            loadGameState(); // Load saved state (includes initial energy calc & UI update)
-            displayUserInfo(); // Display user info from Telegram
-
-            // Add event listeners
-            catImage.addEventListener('click', handleTap);
-            catImage.addEventListener('touchstart', (e) => {
-                // Prevent zoom on double tap, allow single tap through
-                if (e.touches.length === 1) {
-                     handleTap(e.touches[0]); // Pass touch event coordinates
-                     e.preventDefault(); // Prevent triggering click event as well
-                }
-            }, { passive: false });
-
-
+            // --- Event Listeners ---
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    showSection(button.dataset.section);
+                    const targetPageId = button.getAttribute('data-target');
+                    setActivePage(targetPageId);
                 });
             });
 
-            // Start energy regeneration interval (every second)
-            setInterval(regenerateEnergy, 1000);
+            tapCat.addEventListener('click', handleTap);
+             // Add touchstart for faster mobile feedback, prevent double triggering with click
+             let touchHandled = false;
+             tapCat.addEventListener('touchstart', (e) => {
+                 e.preventDefault(); // Prevent potential zoom or other default actions
+                 handleTap();
+                 touchHandled = true;
+                 // Reset touchHandled shortly after to allow subsequent clicks
+                 setTimeout(() => { touchHandled = false; }, 300);
+             }, { passive: false });
+
+             tapCat.addEventListener('click', (e) => {
+                 if (touchHandled) {
+                     // If touchstart already handled it, prevent click from firing again
+                     e.preventDefault();
+                     e.stopPropagation();
+                     return;
+                 }
+                 // handleTap() will be called by the normal click listener if not touch
+             });
+
+
+            themeToggle.addEventListener('change', () => {
+                const newTheme = themeToggle.checked ? 'dark' : 'light';
+                applyTheme(newTheme);
+            });
+
+
+            // --- Initialization ---
+            loadGameState();    // Load saved state or defaults
+            applyTheme(gameState.theme); // Apply loaded theme
+            updateScoreUI();    // Set initial UI values
+            updateEnergyUI();
+            setActivePage(gameState.activePage); // Set initial page
+
+            // Start energy refill loop
+            setInterval(refillEnergy, 1000); // Check every second
 
             // Save state when the user leaves the page/app
             window.addEventListener('beforeunload', saveGameState);
-            // Also consider saving when visibility changes (app minimized)
-             document.addEventListener('visibilitychange', () => {
-                 if (document.visibilityState === 'hidden') {
-                     saveGameState();
-                 }
-             });
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    saveGameState();
+                } else {
+                    // Optional: When returning, recalculate energy based on last save
+                    // This is partially handled by the load/refill logic already
+                    loadGameState(); // Reload to capture offline progress accurately
+                    updateEnergyUI();
+                }
+            });
 
-            console.log("TapSwap Clone Initialized");
-            // Optional: Send ready signal back to bot if needed
-            // tg.sendData(JSON.stringify({ type: 'webapp_ready' }));
-        }
+            console.log("TapSwap WebApp Initialized");
+            // tg.HapticFeedback.notificationOccurred('success'); // Example haptic feedback
 
-        // --- Initialization ---
-         // Make sure the DOM is fully loaded before running the script
-         if (document.readyState === 'loading') {
-             document.addEventListener('DOMContentLoaded', initializeApp);
-         } else {
-             // DOMContentLoaded has already fired
-             initializeApp();
-         }
-
-        // Add simple shake animation CSS if needed
-        const styleSheet = document.styleSheets[0];
-        const shakeKeyframes = `
-            @keyframes shake {
-              0%, 100% { transform: translateX(0); }
-              25% { transform: translateX(-3px); }
-              50% { transform: translateX(3px); }
-              75% { transform: translateX(-3px); }
-            }
-        `;
-         try {
-            styleSheet.insertRule(shakeKeyframes, styleSheet.cssRules.length);
-         } catch (e) {
-            console.warn("Could not insert shake keyframes", e);
-         }
-
-
+        });
     </script>
+
 </body>
 </html>
