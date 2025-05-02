@@ -4,746 +4,1189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TapSwap Clone</title>
-    <!-- Include Telegram WebApp script -->
+    <!-- Telegram WebApp JS -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Reset and Base Styles */
         :root {
-            --bg-color-light: #f8f9fa;
-            --text-color-light: #212529;
-            --primary-color-light: #007bff;
-            --secondary-color-light: #6c757d;
-            --card-bg-light: #ffffff;
-            --nav-bg-light: #e9ecef;
-            --nav-icon-light: #495057;
-            --nav-icon-active-light: #007bff;
-            --energy-bar-bg-light: #e9ecef;
-            --energy-bar-fill-light: linear-gradient(90deg, #ffc107, #ff9800);
-            --cat-bg-light: #d1e7ff;
-            --button-bg-light: #007bff;
-            --button-text-light: #ffffff;
-            --score-color-light: #28a745;
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #aaaaaa;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #5288c1;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f1f1f1;
 
-            --bg-color-dark: #1a1a1a;
-            --text-color-dark: #e0e0e0;
-            --primary-color-dark: #4dabf7;
-            --secondary-color-dark: #adb5bd;
-            --card-bg-dark: #2c2c2c;
-            --nav-bg-dark: #212121;
-            --nav-icon-dark: #b0b0b0;
-            --nav-icon-active-dark: #4dabf7;
-            --energy-bar-bg-dark: #3a3a3a;
-            --energy-bar-fill-dark: linear-gradient(90deg, #ffecb3, #ffcc80);
-            --cat-bg-dark: #303f9f;
-            --button-bg-dark: #4dabf7;
-            --button-text-dark: #121212;
-            --score-color-dark: #66bb6a;
-
-            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --transition-speed: 0.3s;
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --energy-color: #ffc107;
+            --energy-bg: #e9ecef;
+            --bottom-nav-bg: #ffffff;
+            --bottom-nav-border: #e0e0e0;
+            --bottom-nav-icon-color: #bdbdbd;
+            --bottom-nav-icon-active-color: var(--primary-color);
         }
 
+        /* Basic Reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
         }
 
         html, body {
             height: 100%;
-            overflow: hidden; /* Prevent scrolling on the body */
-            font-family: var(--font-main);
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh */
+            background-color: var(--tg-theme-bg-color, var(--background-color));
+            color: var(--tg-theme-text-color, var(--text-color));
         }
 
-        body {
+        body.dark {
+             --primary-color: #4dabf7;
+            --secondary-color: #909296;
+            --background-color: #1a1a1a;
+            --text-color: #e9ecef;
+            --card-bg: #2c2c2c;
+            --border-color: #495057;
+            --energy-color: #fab005;
+            --energy-bg: #495057;
+            --bottom-nav-bg: #252525;
+            --bottom-nav-border: #3f3f3f;
+            --bottom-nav-icon-color: #757575;
+            --bottom-nav-icon-active-color: var(--primary-color);
+        }
+
+        #app {
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color var(--transition-speed), color var(--transition-speed);
+            height: 100vh; /* Use viewport height */
+            width: 100%;
+            overflow: hidden; /* Prevent body scroll */
         }
 
-        body[data-theme="light"] {
-            --bg-color: var(--bg-color-light);
-            --text-color: var(--text-color-light);
-            --primary-color: var(--primary-color-light);
-            --secondary-color: var(--secondary-color-light);
-            --card-bg: var(--card-bg-light);
-            --nav-bg: var(--nav-bg-light);
-            --nav-icon: var(--nav-icon-light);
-            --nav-icon-active: var(--nav-icon-active-light);
-            --energy-bar-bg: var(--energy-bar-bg-light);
-            --energy-bar-fill: var(--energy-bar-fill-light);
-            --cat-bg: var(--cat-bg-light);
-            --button-bg: var(--button-bg-light);
-            --button-text: var(--button-text-light);
-            --score-color: var(--score-color-light);
-        }
-
-        body[data-theme="dark"] {
-            --bg-color: var(--bg-color-dark);
-            --text-color: var(--text-color-dark);
-            --primary-color: var(--primary-color-dark);
-            --secondary-color: var(--secondary-color-dark);
-            --card-bg: var(--card-bg-dark);
-            --nav-bg: var(--nav-bg-dark);
-            --nav-icon: var(--nav-icon-dark);
-            --nav-icon-active: var(--nav-icon-active-dark);
-            --energy-bar-bg: var(--energy-bar-bg-dark);
-            --energy-bar-fill: var(--energy-bar-fill-dark);
-            --cat-bg: var(--cat-bg-dark);
-            --button-bg: var(--button-bg-dark);
-            --button-text: var(--button-text-dark);
-            --score-color: var(--score-color-dark);
-        }
-
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* Full viewport height */
-        }
-
-        .content-area {
+        #content {
             flex-grow: 1;
-            overflow-y: auto; /* Allow scrolling within content */
-            overflow-x: hidden;
-            padding: 20px;
+            overflow-y: auto; /* Allow content scrolling */
+            padding: 15px;
             padding-bottom: 80px; /* Space for bottom nav */
         }
 
+        /* Page Styling */
         .page {
-            display: none; /* Hide pages by default */
-            animation: fadeIn 0.5s ease-in-out;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
         .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            display: flex; /* Show active page */
         }
 
         /* Bottom Navigation */
-        .bottom-nav {
+        #bottomNav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
+            height: 65px;
+            background-color: var(--tg-theme-secondary-bg-color, var(--bottom-nav-bg));
+            border-top: 1px solid var(--bottom-nav-border);
             display: flex;
             justify-content: space-around;
             align-items: center;
-            height: 65px;
-            background-color: var(--nav-bg);
-            border-top: 1px solid var(--secondary-color-light); /* Subtle border */
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            transition: background-color var(--transition-speed);
+            padding: 5px 0;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
             z-index: 1000;
         }
 
-        body[data-theme="dark"] .bottom-nav {
-             border-top: 1px solid var(--secondary-color-dark);
-        }
-
         .nav-button {
+            background: none;
+            border: none;
+            color: var(--bottom-nav-icon-color);
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: none;
-            border: none;
-            color: var(--nav-icon);
             font-size: 10px;
-            padding: 8px 5px;
-            cursor: pointer;
             flex-grow: 1;
-            text-align: center;
-            transition: color var(--transition-speed);
-            outline: none; /* Remove focus outline */
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            padding: 5px 0;
+            transition: color 0.2s ease;
         }
 
-        .nav-button .icon {
-            font-size: 22px;
+        .nav-button svg {
+            width: 24px;
+            height: 24px;
             margin-bottom: 4px;
+            fill: currentColor;
         }
 
         .nav-button.active {
-            color: var(--nav-icon-active);
-            font-weight: bold;
+            color: var(--tg-theme-button-color, var(--bottom-nav-icon-active-color));
         }
 
-        /* Page Specific Styles */
+        /* Shared Card Style */
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, var(--card-bg));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: var(--tg-theme-text-color, var(--text-color));
+            text-align: center;
+        }
 
         /* Profile Page */
-        #profile-page h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-        }
-        .theme-switcher {
+        #profilePage .info-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            transition: background-color var(--transition-speed);
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95em;
         }
-        .theme-switcher span {
-            font-size: 16px;
+        #profilePage .info-item:last-child {
+            border-bottom: none;
         }
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
+        #profilePage .info-item span:first-child {
+            color: var(--tg-theme-hint-color, var(--secondary-color));
+            margin-right: 10px;
         }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+        #profilePage .info-item span:last-child {
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all; /* For long referral links */
         }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
+         #profilePage .profile-pic {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: var(--primary-color);
-        }
-        input:checked + .slider:before {
-            transform: translateX(24px);
+            margin: 0 auto 15px auto;
+            display: block;
+            background-color: var(--border-color);
+            /* Add a default background or image */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23e0e0e0"/><path d="M50 42c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm0 28c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" fill="%23a0a0a0"/><path d="M76 64c0-11-8.5-20-19.3-21.7 1.1-1.6 1.8-3.5 1.8-5.6 0-5.5-4.5-10-10-10s-10 4.5-10 10c0 2.1.6 4 1.8 5.6C28.5 44 20 53 20 64v6h60v-6z" fill="%23a0a0a0"/></svg>');
+            background-size: cover;
+            background-position: center;
         }
 
         /* Tap Page */
-        #tap-page {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-around; /* Space out elements */
-            height: calc(100vh - 65px - 40px); /* Full height minus nav and padding */
-            min-height: 450px; /* Ensure minimum height on smaller screens */
+        #tapPage {
+            justify-content: space-between;
+            height: 100%; /* Ensure tap page itself takes space */
             text-align: center;
         }
 
-        .score-container {
-            margin-bottom: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            color: var(--score-color);
-             display: flex;
-             align-items: center;
-             justify-content: center;
-        }
-         .score-icon {
-             width: 30px;
-             height: 30px;
-             margin-right: 10px;
-             vertical-align: middle;
-         }
-
-
-        .cat-container {
-            position: relative;
-            width: 200px; /* Adjust size as needed */
-            height: 200px;
-            margin: 20px auto;
-        }
-
-        #tap-cat {
-            width: 100%;
-            height: 100%;
-            background-color: var(--cat-bg);
-            border-radius: 50%;
+        .tap-area {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            cursor: pointer;
-            user-select: none; /* Prevent text selection */
-            -webkit-user-drag: none; /* Prevent image dragging */
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
-            transition: transform 0.1s ease, background-color var(--transition-speed);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            justify-content: center;
+            flex-grow: 1;
+            margin-top: 20px;
         }
 
-        #tap-cat:active {
+        #catButton {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.1s ease-out;
+            user-select: none; /* Prevent image selection */
+            -webkit-user-select: none;
+            margin-bottom: 20px;
+        }
+
+        #catImage {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background-color: var(--warning-color); /* Placeholder */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+             /* Add a simple cat SVG */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐱</text></svg>');
+            background-size: 70%;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        #catButton:active #catImage {
             transform: scale(0.95);
         }
 
-        #tap-cat svg {
-            width: 60%;
-            height: 60%;
-            fill: var(--button-text); /* Use button text color for contrast */
-            transition: fill var(--transition-speed);
-        }
-        body[data-theme="dark"] #tap-cat svg {
-             fill: var(--button-text-dark);
-        }
-
-
-        .tap-feedback {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
+        .score-display {
+            font-size: 2.5em;
             font-weight: bold;
-            color: var(--primary-color);
-            opacity: 0;
-            animation: floatUp 0.6s ease-out forwards;
-            pointer-events: none; /* Allow clicks to go through */
+            margin-bottom: 20px;
+            color: var(--tg-theme-text-color, var(--text-color));
         }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); } /* Move up and fade out */
+        .score-display span {
+            vertical-align: middle;
         }
-
-
-        .energy-container {
-            width: 90%;
-            max-width: 400px;
-            margin-top: 15px;
-            text-align: center;
-        }
-        .energy-label {
-             font-size: 14px;
-             color: var(--secondary-color);
-             margin-bottom: 8px;
-             display: flex;
-             justify-content: space-between;
-             align-items: center;
-        }
-         .energy-icon {
-             font-size: 18px;
+        .score-icon {
+             display: inline-block;
+             width: 30px;
+             height: 30px;
+             margin-right: 8px;
              vertical-align: middle;
-             margin-right: 5px;
-         }
+             background-color: var(--warning-color); /* Use a coin-like color */
+             border-radius: 50%;
+              /* Simple coin icon */
+             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 13.41L11 14.59V7h2v6.59l1.59 1.59L13.41 15.41z"/></svg>');
+             background-size: 60%;
+             background-repeat: no-repeat;
+             background-position: center;
+        }
 
-        #energy-bar-container {
+
+        .energy-section {
             width: 100%;
-            height: 15px;
-            background-color: var(--energy-bar-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-            transition: background-color var(--transition-speed);
+            max-width: 400px;
+            margin: 0 auto;
         }
 
-        #energy-bar {
-            height: 100%;
-            width: 100%; /* Initial width */
-            background: var(--energy-bar-fill);
-            border-radius: 10px;
-            transition: width 0.5s ease-out, background var(--transition-speed); /* Smooth transition for width */
-        }
-
-        /* Task & Withdraw Pages */
-        .placeholder-content {
+        .energy-label {
+            font-size: 0.9em;
+            color: var(--tg-theme-hint-color, var(--secondary-color));
+            margin-bottom: 5px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: calc(100vh - 150px); /* Adjust height as needed */
-            text-align: center;
-            color: var(--secondary-color);
+            justify-content: space-between;
+        }
+        .energy-label span:last-child {
+            font-weight: 500;
+            color: var(--tg-theme-text-color, var(--text-color));
         }
 
-        .placeholder-content .icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.7;
-        }
-
-        .placeholder-content h3 {
-            font-size: 18px;
+        .energy-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: var(--tg-theme-secondary-bg-color, var(--energy-bg));
+            border-radius: 6px;
+            overflow: hidden;
             margin-bottom: 10px;
         }
 
-        .placeholder-content p {
-            font-size: 14px;
+        #energyBar {
+            height: 100%;
+            width: 100%; /* Initial width */
+            background: linear-gradient(90deg, var(--warning-color) 0%, #ffecb3 100%);
+            background-color: var(--energy-color);
+            border-radius: 6px;
+            transition: width 0.2s linear; /* Smooth transition for refill */
         }
 
-         /* Utility Classes */
-         .button {
-             display: inline-block;
-             padding: 10px 20px;
-             background-color: var(--button-bg);
-             color: var(--button-text);
-             border: none;
-             border-radius: 8px;
-             font-size: 16px;
-             font-weight: bold;
-             cursor: pointer;
-             text-align: center;
-             transition: background-color var(--transition-speed), color var(--transition-speed), transform 0.1s ease;
-             margin-top: 20px;
+        /* Task Page */
+        #taskPage ul {
+            list-style: none;
+            width: 100%;
+            max-width: 500px;
+        }
+        #taskPage li {
+            background-color: var(--tg-theme-secondary-bg-color, var(--card-bg));
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #taskPage .task-info {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        #taskPage .task-title {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        #taskPage .task-reward {
+            font-size: 0.9em;
+            color: var(--tg-theme-hint-color, var(--secondary-color));
+        }
+         #taskPage .task-reward svg {
+             width: 14px; height: 14px; fill: var(--warning-color); vertical-align: middle; margin-right: 3px;
          }
-         .button:active {
-             transform: scale(0.98);
+        #taskPage .task-button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            background-color: var(--tg-theme-button-color, var(--primary-color));
+            color: var(--tg-theme-button-text-color, white);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #taskPage .task-button:hover {
+            opacity: 0.9;
+        }
+        #taskPage .task-button:disabled {
+            background-color: var(--tg-theme-hint-color, var(--secondary-color));
+            cursor: not-allowed;
+        }
+        #taskPage .task-button.completed {
+            background-color: var(--success-color);
+            color: white;
+        }
+         #taskPage .task-icon {
+             width: 30px; height: 30px; margin-right: 10px; flex-shrink: 0; fill: var(--tg-theme-link-color, var(--primary-color));
+         }
+         /* Basic Youtube Icon */
+         .youtube-icon svg { fill: #FF0000; }
+
+
+        /* Withdraw Page */
+        #withdrawPage .card {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: var(--tg-theme-hint-color, var(--secondary-color));
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1em;
+            background-color: var(--tg-theme-bg-color, white);
+             color: var(--tg-theme-text-color, var(--text-color));
+        }
+         .form-group input:focus, .form-group select:focus {
+             outline: none;
+             border-color: var(--tg-theme-button-color, var(--primary-color));
+             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+         }
+
+        .withdraw-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            background-color: var(--tg-theme-button-color, var(--primary-color));
+            color: var(--tg-theme-button-text-color, white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .withdraw-button:hover {
+            opacity: 0.9;
+        }
+         .withdraw-button:disabled {
+            background-color: var(--tg-theme-hint-color, var(--secondary-color));
+            cursor: not-allowed;
+         }
+
+        .withdraw-message {
+            margin-top: 15px;
+            font-size: 0.9em;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        .withdraw-message.success { color: var(--success-color); }
+        .withdraw-message.error { color: var(--danger-color); }
+
+         /* Tap Feedback Animation */
+        .tap-feedback {
+            position: absolute;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--tg-theme-text-color, #333);
+            opacity: 1;
+            animation: floatUp 0.8s ease-out forwards;
+            pointer-events: none; /* So it doesn't interfere with clicks */
+            user-select: none;
+             white-space: nowrap;
+        }
+
+        @keyframes floatUp {
+            from {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-60px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        /* Loading State */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-size: 1.2em;
+            color: #333;
+        }
+         body.dark #loadingOverlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #eee;
          }
 
     </style>
 </head>
-<body data-theme="light">
+<body>
+    <div id="app">
+         <div id="loadingOverlay">Loading...</div>
 
-    <div class="app-container">
-        <main class="content-area">
+        <div id="content">
             <!-- Profile Page -->
-            <div id="profile-page" class="page">
-                <h2>Profile & Settings</h2>
-                 <div class="placeholder-content">
-                    <span class="icon">👤</span>
-                    <h3>User Profile</h3>
-                    <p>User details and stats will appear here.</p>
-                 </div>
-                 <div class="theme-switcher">
-                     <span>Dark Mode</span>
-                     <label class="toggle-switch">
-                       <input type="checkbox" id="theme-toggle-checkbox">
-                       <span class="slider"></span>
-                     </label>
-                   </div>
+            <div id="profilePage" class="page">
+                <div class="card">
+                    <h2>Profile</h2>
+                    <img id="profilePic" class="profile-pic" alt="Profile Picture">
+                    <div class="info-item">
+                        <span>Name:</span>
+                        <span id="profileName">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span>User ID:</span>
+                        <span id="profileUserId">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Points:</span>
+                        <span id="profilePoints">0</span>
+                    </div>
+                     <div class="info-item">
+                        <span>Joined:</span>
+                        <span id="profileJoinDate">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Referral Link:</span>
+                        <span id="profileReferral">N/A (Demo)</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Tap Page -->
-            <div id="tap-page" class="page active">
-                <div class="score-container">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEwQzIxIDE1LjUyMjggMTYuNTIyOCAyMCAxMSAyMEMxMC40IDE5Ljk5OTkgOS44MTgxOCAxOS45NDk0IDkuMjUgMTkuODU3MUwxOSA4LjEyNUMxOS40NDEzIDguMzcxNjIgMTkuODI1NyA4LjUxNzYxIDIwLjIzNTcgOC43MDU3MUMyMC43Mzk5IDkuMDU0MDcgMjEgOS41MTA3MiAyMSAxMFoiIGZpbGw9IiNGRkMxMDciLz4KPHBhdGggZD0iTTMgMTBDMyA0LjQ3NzE1IDcuNDc3MTUgMCAxMyAwQzE0LjY4OTMgMCAxNi4yNjI5IDAuNDMzNzIgMTcuNjQyOSA MS4xODc1TDUgMTUuODMxQzQuMDYyOTIgMTUuMjQ3OCA0IDE0LjE1NjcgNCAxM0M0IDExLjYyNDUgNC4zNTc5NyAxMC4zNTkgNS4wMDAwMiA5LjI0OTk4QzQuMzYwODUgOS41MDI5NCAzLjggOS42OTY4NyAzIDguNUMzIDggMyAxMiAzIDEwWiIgZmlsbD0iI0ZGRkM0MCIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExIDRDNy4xMzQwMSA0IDQgNy4xMzQwMSA0IDEzQzQgMTQuMTU2NyA0LjA2MjkyIDE1LjI0NzggNSAxNS44MzFMNy4xNDI4NiAxMy4xNDI5QzcuMDUwNTUgMTIuMTgxOCA3IDExLjEzMTcgNyAxMUM3IDguNzgwMzYgOC4wNTY0NyA2Ljc4ODY4IDkuNzQ4NjIgNS40NDI4OEMxMC4yMjY5IDUuMDU5MTMgMTAuNjA1MyA1IDExIDVDMTIuNzY5MyA1IDE0LjM1MzggNS42NTQ4OCAxNS41NTcxIDYuODU3MTRMMTcuNjQyOSAxLjE4NzVDMTYuMjYyOSAwLjQzMzcyIDE0LjY4OTMgMCAxMyAwQzcuNDc3MTUgMCAzIDQuNDc3MTUgMyAxMEMzIDEyIDMgOCAzIDguNUMzLjggOS42OTY4NyA0LjM2MDg1IDkuNTAyOTQgNS4wMDAwMiA5LjI0OTk4QzQuMzU3OTcgMTAuMzU5IDQgMTEuNjI0NSA0IDEzQzQgMTAgNy4xMzQwMSA0IDExIDRaIiBmaWxsPSIjRkZBNjAwIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTEzIDI0QzE4LjUyMjggMjQgMjMgMTkuNTIyOCAyMyAxNEMyMyAxMi4zMTA3IDIyLjU2NjMgMTAuNzM3MSAyMS44MTI1IDkuMzU3MTJMOS4yNSAxOS44NTcxQzkuODE4MTggMTkuOTQ5NCAxMC40IDE5Ljk5OTkgMTEgMjBDMTQuODY1OSAyMCAxNy44Njg4IDE3Ljg1NzEgMTkuNzUxNCAxNC41NTcxQzIwLjQ0MDggMTMuMjE1IDIxIDEyLjE3OTYgMjEgMThDMTggMTggMTMgMjQgMTMgMjRaIiBmaWxsPSIjRkZBNjAwIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTMgMjBDMTAuNDE4MiAyMCA4LjE4MTgyIDE4LjQwOSA3IDE2QzggMTYgMTEgMTkgMTUgMTVDMTUgMTEgMTIgOCA3IDhDNyA4IDQgOS41IDQgMTNDNCAxNC4xNzM1IDQuMzQwMzYgMTUuMjQ4MiA1IDE1LjgzMUw5LjI1IDE5Ljg1NzFDMTAuMTgxOCAyMS45NDk0IDEwLjQgMjIgMTEgMjJDMTIuNzY5MyAyMiAxNC4zNTM4IDIxLjM0NTIgMTUuNTU3MSAyMC4xNDI5QzE0Ljc4ODYgMjAuNzk1NyAxNC4zNjYxIDIwLjQ5NDQgMTMgMjBaIiBmaWxsPSIjRkZDNTAwIi8+Cjwvc3ZnPgo=" alt="Score" class="score-icon">
-                    <span id="score-display">0</span>
+            <div id="tapPage" class="page active">
+                 <div class="score-display">
+                    <span class="score-icon"></span>
+                    <span id="pointsDisplay">0</span>
                 </div>
-
-                <div class="cat-container">
-                    <div id="tap-cat" role="button" aria-label="Tap the cat">
-                        <!-- Embedded SVG Cat -->
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.41 6.59c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41-.38-.39-1.02-.39-1.41 0zm-6.82 0c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41-.39-.39-1.03-.39-1.41 0zM12 18c-2.28 0-4.38-.9-5.96-2.39.32-.06.65-.1.99-.1.89 0 1.74.2 2.5.55.78.36 1.67.55 2.59.55s1.81-.19 2.59-.55c.76-.35 1.61-.55 2.5-.55.34 0 .67.04.99.1C16.38 17.1 14.28 18 12 18z"/>
-                        </svg>
-                    </div>
-                     <div id="tap-feedback-container"></div>
+                <div class="tap-area">
+                    <button id="catButton">
+                        <div id="catImage"></div>
+                    </button>
                 </div>
-
-                <div class="energy-container">
-                    <div class="energy-label">
-                       <span><span class="energy-icon">⚡</span>Energy</span>
-                       <span id="energy-level">100 / 100</span>
+                <div class="energy-section">
+                     <div class="energy-label">
+                         <span>⚡ Energy</span>
+                         <span id="energyLevel">100 / 100</span>
                     </div>
-                    <div id="energy-bar-container">
-                        <div id="energy-bar"></div>
+                    <div class="energy-bar-container">
+                        <div id="energyBar"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Task Page -->
-            <div id="task-page" class="page">
-                 <div class="placeholder-content">
-                    <span class="icon">✅</span>
-                    <h3>Tasks</h3>
-                    <p>Complete tasks to earn more points!</p>
-                    <button class="button" onclick="alert('Task system coming soon!')">View Tasks</button>
+            <div id="taskPage" class="page">
+                <div class="card">
+                     <h2>Tasks</h2>
+                     <p style="text-align: center; color: var(--tg-theme-hint-color); font-size: 0.9em; margin-bottom: 15px;">Complete tasks to earn more points!</p>
+                     <ul id="taskList">
+                         <!-- Tasks will be dynamically added here -->
+                     </ul>
                  </div>
             </div>
 
             <!-- Withdraw Page -->
-            <div id="withdraw-page" class="page">
-                 <div class="placeholder-content">
-                    <span class="icon">💰</span>
-                    <h3>Withdraw</h3>
-                    <p>Withdrawal options will be available here.</p>
-                    <button class="button" onclick="alert('Withdrawal feature coming soon!')">Withdraw Funds</button>
+            <div id="withdrawPage" class="page">
+                 <div class="card">
+                     <h2>Withdraw Points</h2>
+                     <p style="text-align: center; color: var(--tg-theme-hint-color); font-size: 0.9em; margin-bottom: 15px;">Current Points: <span id="withdrawPointsAvailable">0</span></p>
+
+                     <div class="form-group">
+                        <label for="withdrawAmount">Amount to Withdraw:</label>
+                        <input type="number" id="withdrawAmount" placeholder="Enter amount" min="1">
+                     </div>
+
+                     <div class="form-group">
+                         <label for="withdrawMethod">Withdrawal Method:</label>
+                         <select id="withdrawMethod">
+                             <option value="paypal">PayPal</option>
+                             <option value="wire">Wire Transfer</option>
+                             <option value="crypto">Crypto (USDT)</option>
+                             <option value="localhost">Localhost Simulation</option>
+                         </select>
+                     </div>
+
+                     <div id="methodDetails">
+                         <!-- Dynamic fields based on method can go here if needed -->
+                          <div class="form-group detail-field paypal-field">
+                             <label for="paypalEmail">PayPal Email:</label>
+                             <input type="email" id="paypalEmail" placeholder="your.email@example.com">
+                          </div>
+                          <div class="form-group detail-field wire-field" style="display: none;">
+                             <label for="bankAccount">Bank Account Number:</label>
+                             <input type="text" id="bankAccount" placeholder="Account Number">
+                             <label for="bankRouting">Routing Number:</label>
+                             <input type="text" id="bankRouting" placeholder="Routing Number">
+                          </div>
+                          <div class="form-group detail-field crypto-field" style="display: none;">
+                             <label for="cryptoAddress">USDT Wallet Address (TRC20):</label>
+                             <input type="text" id="cryptoAddress" placeholder="T...">
+                          </div>
+                     </div>
+
+                     <button id="submitWithdrawal" class="withdraw-button">Request Withdrawal</button>
+                     <p id="withdrawMessage" class="withdraw-message"></p>
                  </div>
             </div>
-        </main>
+        </div>
 
-        <nav class="bottom-nav">
-            <button class="nav-button" data-target="profile-page">
-                <span class="icon">👤</span> Profile
+        <!-- Bottom Navigation Bar -->
+        <nav id="bottomNav">
+            <button class="nav-button" data-page="profilePage">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                Profile
             </button>
-            <button class="nav-button active" data-target="tap-page">
-                <span class="icon">🐾</span> Tap
+            <button class="nav-button active" data-page="tapPage">
+                 <svg viewBox="0 0 24 24"><path d="M20.1 7.65l-1.48-1.48C18.24 5.79 17.7 6 17.7 6.52v1.96c-2.73.13-4.96 1.48-6.47 3.46-.76 1-1.24 2.18-1.44 3.45-.05.39-.46.61-.83.48l-1.17-.41c-.35-.12-.5-.54-.35-.89 1.11-2.59 3.31-4.5 6.19-5.45V7.2c0-.52-.54-.73-.91-.35l-1.48 1.48c-.19.19-.19.51 0 .71l1.48 1.48c.37.37.91.16.91-.35v-1.4c1.89.84 3.43 2.34 4.3 4.24.18.39.64.51.92.27l1.05-.88c.33-.28.3-.78-.08-1.02-1.16-1.62-2.78-2.88-4.68-3.63v1.4c0 .52.54.73.91.35l1.48-1.48c.2-.19.2-.51.01-.7zM9.1 13.17c-.19-.35.01-.77.36-.89l1.17-.41c.37-.13.78.09.83.48.2 1.27.69 2.45 1.44 3.45 1.51 1.98 3.74 3.33 6.47 3.46v1.96c0 .52.54.73.91.35l1.48-1.48c.19-.19.19-.51 0-.71l-1.48-1.48c-.37-.37-.91-.16-.91.35v1.4c-1.89-.84-3.43-2.34-4.3-4.24-.18-.39-.64-.51-.92-.27l-1.05.88c-.33.28-.3.78.08 1.02 1.16 1.62 2.78 2.88 4.68 3.63v-1.4c0-.52-.54-.73-.91-.35L18.6 19.35c-.2.19-.2.51-.01.7l1.48 1.48c.37.38.91.17.91-.35v-1.96c-3.08-.14-5.59-1.73-7.19-3.92-.73-1.1-1.17-2.38-1.35-3.79z"/></svg>
+                Tap
             </button>
-            <button class="nav-button" data-target="task-page">
-                <span class="icon">✅</span> Task
+            <button class="nav-button" data-page="taskPage">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                Tasks
             </button>
-            <button class="nav-button" data-target="withdraw-page">
-                <span class="icon">💰</span> Withdraw
+            <button class="nav-button" data-page="withdrawPage">
+                 <svg viewBox="0 0 24 24"><path d="M19 7c0-1.1-.9-2-2-2h-3v2h3v2.65L13.5 14H10v-4H5v11h14V7zm-8 6H8v-2h3v2zm0 4H8v-2h3v2zm5 0h-3v-2h3v2z"/><path d="M5 21h14V9h-5v4H9L4 7.35V19c0 1.1.9 2 2 2zM8 17h3v-2H8v2zm0-4h3v-2H8v2zm5 4h3v-2h-3v2z" opacity=".3"/></svg> <!-- Placeholder Wallet Icon -->
+                Withdraw
             </button>
         </nav>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Telegram WebApp Initialization ---
-            const tg = window.Telegram.WebApp;
-            tg.ready(); // Notify Telegram the app is ready
-            tg.expand(); // Expand the webapp to full height
+        const tg = window.Telegram.WebApp;
 
-            // --- DOM Elements ---
-            const navButtons = document.querySelectorAll('.nav-button');
-            const pages = document.querySelectorAll('.page');
-            const tapCat = document.getElementById('tap-cat');
-            const scoreDisplay = document.getElementById('score-display');
-            const energyLevelDisplay = document.getElementById('energy-level');
-            const energyBar = document.getElementById('energy-bar');
-            const tapFeedbackContainer = document.getElementById('tap-feedback-container');
-            const themeToggle = document.getElementById('theme-toggle-checkbox');
-            const body = document.body;
+        // --- DOM Elements ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const content = document.getElementById('content');
+        const pages = document.querySelectorAll('.page');
+        const navButtons = document.querySelectorAll('.nav-button');
+        const pointsDisplay = document.getElementById('pointsDisplay');
+        const profilePoints = document.getElementById('profilePoints');
+        const withdrawPointsAvailable = document.getElementById('withdrawPointsAvailable');
+        const catButton = document.getElementById('catButton');
+        const catImage = document.getElementById('catImage');
+        const energyLevelDisplay = document.getElementById('energyLevel');
+        const energyBar = document.getElementById('energyBar');
+        const taskList = document.getElementById('taskList');
+        const withdrawAmountInput = document.getElementById('withdrawAmount');
+        const withdrawMethodSelect = document.getElementById('withdrawMethod');
+        const submitWithdrawalButton = document.getElementById('submitWithdrawal');
+        const withdrawMessage = document.getElementById('withdrawMessage');
+        const profileName = document.getElementById('profileName');
+        const profileUserId = document.getElementById('profileUserId');
+        const profileJoinDate = document.getElementById('profileJoinDate');
+        const profileReferral = document.getElementById('profileReferral');
+         const profilePic = document.getElementById('profilePic');
+         const methodDetailsDiv = document.getElementById('methodDetails');
+         const detailFields = methodDetailsDiv.querySelectorAll('.detail-field');
 
-            // --- Game State ---
-            const defaultState = {
-                score: 0,
-                energy: 100,
-                maxEnergy: 100,
-                energyPerTap: 1,
-                energyRefillRate: 1, // energy points per second
-                lastUpdate: Date.now(),
-                theme: 'light',
-                activePage: 'tap-page'
-            };
-            let gameState = {};
 
-            // --- Local Storage Functions ---
-            function saveGameState() {
-                gameState.lastUpdate = Date.now(); // Always update timestamp before saving
-                try {
-                    localStorage.setItem('tapSwapGameState', JSON.stringify(gameState));
-                    // console.log('Game state saved:', gameState);
-                } catch (e) {
-                    console.error("Error saving game state to localStorage:", e);
+        // --- Game State & Config ---
+        const MAX_ENERGY = 1000; // Example: Max energy
+        const ENERGY_REFILL_RATE = 2; // Energy points per second
+        const ENERGY_PER_TAP = 1; // Energy cost per tap
+        const POINTS_PER_TAP = 1; // Points earned per tap
+        const LOCAL_STORAGE_KEY = 'tapSwapCloneData';
+        const TASK_REWARD = 1000;
+
+         // Define tasks (including icons)
+        const TASKS = [
+            { id: 0, title: "Watch Intro Video", description: `Earn ${TASK_REWARD} points`, completed: false, icon: 'youtube' },
+            { id: 1, title: "Watch Tutorial 1", description: `Earn ${TASK_REWARD} points`, completed: false, icon: 'youtube' },
+            { id: 2, title: "Watch Tutorial 2", description: `Earn ${TASK_REWARD} points`, completed: false, icon: 'youtube' },
+            { id: 3, title: "Subscribe to Channel", description: `Earn ${TASK_REWARD} points`, completed: false, icon: 'youtube' },
+            { id: 4, title: "Like a Video", description: `Earn ${TASK_REWARD} points`, completed: false, icon: 'youtube' },
+        ];
+
+        let userData = {
+            points: 0,
+            energy: MAX_ENERGY,
+            maxEnergy: MAX_ENERGY,
+            lastEnergyUpdate: Date.now(),
+            joinDate: null,
+            tasks: TASKS.map(task => ({ id: task.id, completed: false })), // Store only completion status
+            telegramUser: null
+        };
+
+        // --- Initialization ---
+        function initApp() {
+            console.log("Initializing App...");
+            tg.ready();
+
+            // Apply Telegram theme
+            applyTheme();
+            tg.onEvent('themeChanged', applyTheme);
+
+            // Expand the Web App to full height
+            tg.expand();
+
+             // Disable vertical swipe gesture
+             tg.disableVerticalSwipes();
+
+            // Load user data
+            loadData();
+
+             // Get Telegram User Info (use unsafe for demo, real app needs backend validation)
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                userData.telegramUser = tg.initDataUnsafe.user;
+                console.log("Telegram User:", userData.telegramUser);
+                if (!userData.joinDate) {
+                     userData.joinDate = new Date().toISOString(); // Set join date on first load
+                     saveData();
                 }
+                displayProfileInfo();
+                generateReferralLink(); // Generate mock referral link
+            } else {
+                console.warn("Telegram user data not available.");
+                profileName.textContent = "Guest User";
+                profileUserId.textContent = "N/A";
+                profileJoinDate.textContent = new Date(userData.joinDate || Date.now()).toLocaleDateString();
             }
 
-            function loadGameState() {
-                let loadedState = null;
-                try {
-                    const storedState = localStorage.getItem('tapSwapGameState');
-                    if (storedState) {
-                        loadedState = JSON.parse(storedState);
-                        // console.log('Game state loaded:', loadedState);
-                    }
-                } catch (e) {
-                    console.error("Error loading game state from localStorage:", e);
-                    localStorage.removeItem('tapSwapGameState'); // Clear corrupted data
-                }
 
-                // Merge loaded state with defaults to ensure all keys exist
-                gameState = { ...defaultState, ...loadedState };
+            // Set up initial UI
+            updatePointsDisplay();
+            refillEnergy(); // Initial energy calculation based on time elapsed
+            updateEnergyDisplay();
+            renderTasks();
+             showPage('tapPage'); // Show tap page by default
 
-                // Calculate offline energy regeneration
-                const now = Date.now();
-                const timeDiffSeconds = Math.floor((now - gameState.lastUpdate) / 1000);
-                const energyToRefill = timeDiffSeconds * gameState.energyRefillRate;
+            // Set up event listeners
+            setupEventListeners();
 
-                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + energyToRefill);
-                gameState.lastUpdate = now; // Update last update time after calculation
+            // Start energy refill interval
+            setInterval(refillEnergy, 1000); // Refill every second
 
-                // console.log(`Offline for ${timeDiffSeconds}s, refilled ${energyToRefill} energy.`);
-            }
+            // Hide loading overlay
+            loadingOverlay.style.display = 'none';
+             console.log("App Initialized.");
+        }
 
-            // --- UI Update Functions ---
-            function updateScoreUI() {
-                scoreDisplay.textContent = formatScore(gameState.score);
-            }
+         function applyTheme() {
+            const themeParams = tg.themeParams;
+            console.log("Applying theme:", themeParams);
+            const root = document.documentElement;
 
-            function updateEnergyUI() {
-                const energyPercentage = (gameState.energy / gameState.maxEnergy) * 100;
-                energyBar.style.width = `${energyPercentage}%`;
-                energyLevelDisplay.textContent = `${Math.floor(gameState.energy)} / ${gameState.maxEnergy}`;
-            }
+            setCSSVar('--tg-theme-bg-color', themeParams.bg_color);
+            setCSSVar('--tg-theme-text-color', themeParams.text_color);
+            setCSSVar('--tg-theme-hint-color', themeParams.hint_color);
+            setCSSVar('--tg-theme-link-color', themeParams.link_color);
+            setCSSVar('--tg-theme-button-color', themeParams.button_color);
+            setCSSVar('--tg-theme-button-text-color', themeParams.button_text_color);
+            setCSSVar('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color);
 
-             function formatScore(num) {
-                // Simple number formatting (e.g., 1,000,000)
-                return Math.floor(num).toLocaleString('en-US');
+            // Optional: Add a 'dark' class based on color scheme if available
+             if (tg.colorScheme) {
+                 document.body.classList.toggle('dark', tg.colorScheme === 'dark');
+             } else {
+                 // Basic heuristic if colorScheme is not available
+                 const bgColor = themeParams.bg_color || '#ffffff';
+                 const isDark = isColorDark(bgColor);
+                 document.body.classList.toggle('dark', isDark);
+                 console.log(`Inferred theme: ${isDark ? 'dark' : 'light'} based on bg_color ${bgColor}`);
              }
+        }
 
-            function setActivePage(pageId) {
-                pages.forEach(page => {
-                    page.classList.remove('active');
-                    if (page.id === pageId) {
-                        page.classList.add('active');
-                    }
-                });
-
-                navButtons.forEach(button => {
-                    button.classList.remove('active');
-                    if (button.getAttribute('data-target') === pageId) {
-                        button.classList.add('active');
-                    }
-                });
-                gameState.activePage = pageId;
-                // No need to save state on page change unless crucial
-                // saveGameState();
+        function setCSSVar(varName, value) {
+            if (value) {
+                document.documentElement.style.setProperty(varName, value);
             }
+        }
 
-             function applyTheme(theme) {
-                body.setAttribute('data-theme', theme);
-                themeToggle.checked = (theme === 'dark');
-                gameState.theme = theme;
-                saveGameState(); // Save theme preference
+         function isColorDark(hexColor) {
+            if (!hexColor) return false;
+             try {
+                 // Remove # if present
+                hexColor = hexColor.replace(/^#/, '');
+
+                // Expand shorthand hex (e.g., "03F") to full form ("0033FF")
+                if (hexColor.length === 3) {
+                    hexColor = hexColor.split('').map(char => char + char).join('');
+                }
+
+                if (hexColor.length !== 6) return false; // Invalid hex
+
+                const r = parseInt(hexColor.substring(0, 2), 16);
+                const g = parseInt(hexColor.substring(2, 4), 16);
+                const b = parseInt(hexColor.substring(4, 6), 16);
+
+                // Calculate luminance (per WCAG 2.0)
+                const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+                return luminance < 0.5; // Threshold can be adjusted (0.5 is common)
+             } catch (e) {
+                 console.error("Error checking color darkness:", e);
+                 return false; // Default to light on error
              }
+        }
 
 
-            // --- Game Logic ---
-            function handleTap() {
-                if (gameState.energy >= gameState.energyPerTap) {
-                    // Decrease energy
-                    gameState.energy -= gameState.energyPerTap;
-                    if (gameState.energy < 0) gameState.energy = 0; // Ensure energy doesn't go negative
-
-                    // Increase score
-                    const scoreEarned = 1; // Can be dynamic later (boosts, etc.)
-                    gameState.score += scoreEarned;
-
-                    // Update UI
-                    updateScoreUI();
-                    updateEnergyUI();
-
-                    // Show visual feedback
-                    showTapFeedback(scoreEarned);
-
-                    // Save state (consider debouncing if taps are extremely rapid)
-                    saveGameState();
-                } else {
-                    // Optional: Indicate no energy (e.g., shake animation, message)
-                    // console.log("Not enough energy!");
-                    tapCat.style.animation = 'shake 0.3s ease-in-out';
-                    setTimeout(() => {
-                        tapCat.style.animation = '';
-                    }, 300);
-                }
+        // --- Data Persistence ---
+        function saveData() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userData));
+                 // console.log("Data saved:", userData);
+            } catch (e) {
+                console.error("Error saving data to localStorage:", e);
+                // Maybe show a user-facing error if storage is full?
             }
+        }
 
-            function showTapFeedback(amount) {
-                const feedback = document.createElement('div');
-                feedback.className = 'tap-feedback';
-                feedback.textContent = `+${amount}`;
-                tapFeedbackContainer.appendChild(feedback);
+        function loadData() {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    // Merge loaded data with defaults to handle potential missing keys in old saves
+                    userData = { ...userData, ...parsedData };
 
-                // Remove the feedback element after the animation finishes
-                setTimeout(() => {
-                    feedback.remove();
-                }, 600); // Match animation duration
-            }
-
-             // Add shake animation CSS if needed
-             const styleSheet = document.styleSheets[0];
-             styleSheet.insertRule(`
-                @keyframes shake {
-                  0%, 100% { transform: translateX(0); }
-                  25% { transform: translateX(-3px); }
-                  75% { transform: translateX(3px); }
-                }
-            `, styleSheet.cssRules.length);
-
-            function refillEnergy() {
-                const now = Date.now();
-                const timeDiffSeconds = (now - gameState.lastUpdate) / 1000;
-
-                if (gameState.energy < gameState.maxEnergy) {
-                    const energyToRefill = timeDiffSeconds * gameState.energyRefillRate;
-                    const previousEnergy = gameState.energy;
-                    gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + energyToRefill);
-
-                    // Only update UI and save if energy actually changed significantly
-                    if (Math.floor(gameState.energy) > Math.floor(previousEnergy)) {
-                         updateEnergyUI();
-                         // Update lastUpdate only when energy is refilled to avoid compounding small fractions
-                         gameState.lastUpdate = now;
-                         saveGameState(); // Save state when energy visibly changes
+                    // Ensure tasks array structure is correct after loading
+                    if (!Array.isArray(userData.tasks) || userData.tasks.length !== TASKS.length) {
+                         console.warn("Task data mismatch or missing. Resetting tasks.");
+                         userData.tasks = TASKS.map(task => ({ id: task.id, completed: false }));
+                    } else {
+                         // Ensure loaded task data only contains 'id' and 'completed'
+                         userData.tasks = userData.tasks.map((savedTask, index) => ({
+                            id: TASKS[index].id, // Use the canonical ID from TASKS
+                            completed: savedTask.completed || false // Keep completed status
+                         }));
                     }
+
+                     // Ensure energy is not above max and is a number
+                     userData.energy = Math.min(Number(userData.energy) || 0, userData.maxEnergy || MAX_ENERGY);
+                     userData.points = Number(userData.points) || 0;
+                     userData.lastEnergyUpdate = Number(userData.lastEnergyUpdate) || Date.now();
+
+
+                    console.log("Data loaded:", userData);
+                } catch (e) {
+                    console.error("Error parsing saved data:", e);
+                    // If parsing fails, might want to reset to defaults
+                     localStorage.removeItem(LOCAL_STORAGE_KEY); // Remove corrupted data
+                     // userData remains as default defined above
                 }
-                 // If energy is full, still update the timestamp to prevent large offline calc later
-                 if (gameState.energy >= gameState.maxEnergy) {
-                      gameState.lastUpdate = now;
+            } else {
+                 console.log("No saved data found, using defaults.");
+                 // Set initial join date if not loaded
+                 if (!userData.joinDate) {
+                     userData.joinDate = new Date().toISOString();
                  }
-
             }
+        }
 
-            // --- Event Listeners ---
+        // --- UI Update Functions ---
+        function updatePointsDisplay() {
+            const formattedPoints = Math.floor(userData.points).toLocaleString();
+            pointsDisplay.textContent = formattedPoints;
+            profilePoints.textContent = formattedPoints;
+            withdrawPointsAvailable.textContent = formattedPoints;
+            // Update withdrawal button state
+             withdrawAmountInput.max = Math.floor(userData.points);
+             updateWithdrawButtonState();
+        }
+
+        function updateEnergyDisplay() {
+             const currentEnergy = Math.floor(userData.energy);
+             const maxEnergy = userData.maxEnergy;
+             energyLevelDisplay.textContent = `${currentEnergy} / ${maxEnergy}`;
+             const energyPercentage = (currentEnergy / maxEnergy) * 100;
+             energyBar.style.width = `${energyPercentage}%`;
+        }
+
+        function displayProfileInfo() {
+            if (userData.telegramUser) {
+                profileName.textContent = `${userData.telegramUser.first_name || ''} ${userData.telegramUser.last_name || ''}`.trim() || 'N/A';
+                profileUserId.textContent = userData.telegramUser.id || 'N/A';
+                // Try to get profile photo
+                if (userData.telegramUser.photo_url) {
+                    profilePic.src = userData.telegramUser.photo_url;
+                    profilePic.style.backgroundImage = 'none'; // Remove default SVG if photo loads
+                } else {
+                     // Keep default background if no photo_url
+                     profilePic.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23e0e0e0"/><path d="M50 42c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm0 28c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" fill="%23a0a0a0"/><path d="M76 64c0-11-8.5-20-19.3-21.7 1.1-1.6 1.8-3.5 1.8-5.6 0-5.5-4.5-10-10-10s-10 4.5-10 10c0 2.1.6 4 1.8 5.6C28.5 44 20 53 20 64v6h60v-6z" fill="%23a0a0a0"/></svg>')`;
+                }
+            }
+            profileJoinDate.textContent = userData.joinDate ? new Date(userData.joinDate).toLocaleDateString() : 'N/A';
+        }
+
+         function generateReferralLink() {
+             if (userData.telegramUser && userData.telegramUser.id) {
+                 // In a real app, this would be a link like t.me/YourBot?start=ref_USERID
+                 profileReferral.textContent = `t.me/YourTapSwapBot?start=ref_${userData.telegramUser.id}`;
+             } else {
+                 profileReferral.textContent = 'N/A (User ID missing)';
+             }
+         }
+
+
+        // --- Navigation ---
+        function showPage(pageId) {
+            console.log("Showing page:", pageId);
+            pages.forEach(page => {
+                page.classList.remove('active');
+                if (page.id === pageId) {
+                    page.classList.add('active');
+                }
+            });
             navButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const targetPageId = button.getAttribute('data-target');
-                    setActivePage(targetPageId);
-                });
+                button.classList.remove('active');
+                if (button.dataset.page === pageId) {
+                    button.classList.add('active');
+                }
             });
 
-            tapCat.addEventListener('click', handleTap);
-             // Add touchstart for faster mobile feedback, prevent double triggering with click
-             let touchHandled = false;
-             tapCat.addEventListener('touchstart', (e) => {
-                 e.preventDefault(); // Prevent potential zoom or other default actions
-                 handleTap();
-                 touchHandled = true;
-                 // Reset touchHandled shortly after to allow subsequent clicks
-                 setTimeout(() => { touchHandled = false; }, 300);
-             }, { passive: false });
+             // Scroll content to top when switching pages
+             content.scrollTop = 0;
 
-             tapCat.addEventListener('click', (e) => {
-                 if (touchHandled) {
-                     // If touchstart already handled it, prevent click from firing again
-                     e.preventDefault();
-                     e.stopPropagation();
-                     return;
+            // Refresh data relevant to the shown page
+            if (pageId === 'profilePage') {
+                displayProfileInfo(); // Refresh profile info including points
+                updatePointsDisplay(); // Ensure points are up-to-date
+            } else if (pageId === 'taskPage') {
+                renderTasks(); // Re-render tasks to show current status
+                 updatePointsDisplay();
+            } else if (pageId === 'withdrawPage') {
+                updatePointsDisplay(); // Update available points
+                updateWithdrawMethodDetails(); // Show correct detail fields
+            } else if (pageId === 'tapPage') {
+                updatePointsDisplay();
+                 updateEnergyDisplay();
+            }
+        }
+
+        // --- Game Logic ---
+        function handleTap(event) {
+            if (userData.energy >= ENERGY_PER_TAP) {
+                userData.points += POINTS_PER_TAP;
+                userData.energy -= ENERGY_PER_TAP;
+                userData.lastEnergyUpdate = Date.now(); // Update time on tap
+
+                updatePointsDisplay();
+                updateEnergyDisplay();
+                saveData();
+
+                // Visual Feedback
+                catImage.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    catImage.style.transform = 'scale(1)';
+                }, 100);
+
+                 // Floating number feedback
+                 createFloatingText(`+${POINTS_PER_TAP}`, event.clientX, event.clientY);
+
+            } else {
+                console.log("Not enough energy!");
+                // Optional: Add feedback like screen shake or message
+                 tg.HapticFeedback.notificationOccurred('warning');
+            }
+        }
+
+        function createFloatingText(text, x, y) {
+            const feedback = document.createElement('div');
+            feedback.textContent = text;
+            feedback.className = 'tap-feedback';
+            feedback.style.left = `${x}px`;
+            feedback.style.top = `${y - 30}px`; // Start slightly above the tap point
+
+            document.body.appendChild(feedback); // Append to body to be position:absolute relative to viewport
+
+            feedback.addEventListener('animationend', () => {
+                feedback.remove();
+            });
+        }
+
+
+        function refillEnergy() {
+            const now = Date.now();
+            const timeElapsed = (now - userData.lastEnergyUpdate) / 1000; // Time in seconds
+
+            if (userData.energy < userData.maxEnergy && timeElapsed > 0) {
+                const energyToRefill = timeElapsed * ENERGY_REFILL_RATE;
+                userData.energy = Math.min(userData.maxEnergy, userData.energy + energyToRefill);
+                 // Only save if energy actually changed and we are refilling
+                 if (energyToRefill > 0) {
+                     saveData(); // Save updated energy and time
                  }
-                 // handleTap() will be called by the normal click listener if not touch
+            }
+             // Always update the last check time, even if full, to prevent large jumps after inactivity
+            userData.lastEnergyUpdate = now;
+
+            // Update display regardless of whether it changed, as the interval runs constantly
+             updateEnergyDisplay();
+        }
+
+
+        // --- Task Logic ---
+        function renderTasks() {
+            taskList.innerHTML = ''; // Clear existing tasks
+            TASKS.forEach((taskInfo, index) => {
+                const userTaskData = userData.tasks.find(t => t.id === taskInfo.id) || { completed: false }; // Find corresponding user task data
+                const li = document.createElement('li');
+
+                 // Get icon SVG based on task type
+                 let iconSvg = getTaskIconSvg(taskInfo.icon);
+
+                li.innerHTML = `
+                     <span class="task-icon">${iconSvg}</span>
+                    <div class="task-info">
+                        <div class="task-title">${taskInfo.title}</div>
+                        <div class="task-reward">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 13.41L11 14.59V7h2v6.59l1.59 1.59L13.41 15.41z"/></svg>
+                            ${taskInfo.description}
+                        </div>
+                    </div>
+                    <button class="task-button" data-task-id="${taskInfo.id}" ${userTaskData.completed ? 'disabled' : ''}>
+                        ${userTaskData.completed ? 'Completed' : 'Go'}
+                    </button>
+                `;
+
+                const button = li.querySelector('.task-button');
+                if (userTaskData.completed) {
+                    button.classList.add('completed');
+                } else {
+                    button.addEventListener('click', () => completeTask(taskInfo.id));
+                }
+
+                taskList.appendChild(li);
+            });
+        }
+
+        function getTaskIconSvg(iconType) {
+             switch(iconType) {
+                 case 'youtube':
+                    return `<svg class="youtube-icon" viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.9-1.52-1.76-1.76C18.25 5 12 5 12 5s-6.25 0-7.82.43c-.86.24-1.52.9-1.76 1.76C2 8.75 2 12 2 12s0 3.25.43 4.81c.23.86.9 1.52 1.76 1.76C5.75 19 12 19 12 19s6.25 0 7.82-.43c.86-.24 1.52-.9 1.76-1.76C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>`;
+                 // Add other icons here if needed
+                 default:
+                    return `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`; // Default icon
+             }
+        }
+
+
+        function completeTask(taskId) {
+            const taskIndex = userData.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1 && !userData.tasks[taskIndex].completed) {
+                // Simulate task completion (e.g., watching a video)
+                console.log(`Simulating completion of task ${taskId}...`);
+                 tg.HapticFeedback.notificationOccurred('success');
+
+                 // In a real app, you might open a link here: tg.openLink('https://youtube.com/...')
+                 // and verify completion via backend or callbacks if possible.
+
+                 // For demo, just mark as complete and give reward
+                userData.tasks[taskIndex].completed = true;
+                userData.points += TASK_REWARD;
+
+                updatePointsDisplay();
+                saveData();
+                renderTasks(); // Re-render to update button state
+
+                 // Show temporary confirmation
+                tg.showPopup({
+                    title: 'Task Complete!',
+                    message: `You earned ${TASK_REWARD} points.`,
+                    buttons: [{ type: 'ok' }]
+                });
+            }
+        }
+
+        // --- Withdraw Logic ---
+         function updateWithdrawMethodDetails() {
+             const selectedMethod = withdrawMethodSelect.value;
+             detailFields.forEach(field => {
+                 field.style.display = 'none'; // Hide all first
              });
 
+             const fieldsToShow = document.querySelectorAll(`.${selectedMethod}-field`);
+             fieldsToShow.forEach(field => {
+                 field.style.display = 'block'; // Show relevant fields
+             });
+         }
 
-            themeToggle.addEventListener('change', () => {
-                const newTheme = themeToggle.checked ? 'dark' : 'light';
-                applyTheme(newTheme);
+         function updateWithdrawButtonState() {
+             const amount = parseFloat(withdrawAmountInput.value) || 0;
+             submitWithdrawalButton.disabled = !(amount > 0 && amount <= userData.points);
+         }
+
+        function handleWithdraw() {
+            const amount = parseFloat(withdrawAmountInput.value);
+            const method = withdrawMethodSelect.value;
+
+            withdrawMessage.style.display = 'none'; // Hide previous messages
+             withdrawMessage.textContent = '';
+             withdrawMessage.className = 'withdraw-message'; // Reset classes
+
+            if (isNaN(amount) || amount <= 0) {
+                withdrawMessage.textContent = 'Please enter a valid amount.';
+                 withdrawMessage.classList.add('error');
+                withdrawMessage.style.display = 'block';
+                tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+            if (amount > userData.points) {
+                 withdrawMessage.textContent = 'Insufficient points.';
+                 withdrawMessage.classList.add('error');
+                 withdrawMessage.style.display = 'block';
+                 tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+             // Simple validation for demo purposes
+             let detailsValid = true;
+             let details = { amount, method };
+             if (method === 'paypal') {
+                 const email = document.getElementById('paypalEmail').value;
+                 if (!email || !email.includes('@')) { detailsValid = false; }
+                 details.email = email;
+             } else if (method === 'wire') {
+                 const accNum = document.getElementById('bankAccount').value;
+                 const routNum = document.getElementById('bankRouting').value;
+                 if (!accNum || !routNum) { detailsValid = false; }
+                 details.account = accNum;
+                 details.routing = routNum;
+             } else if (method === 'crypto') {
+                 const address = document.getElementById('cryptoAddress').value;
+                 if (!address || address.length < 10) { detailsValid = false; } // Very basic check
+                 details.address = address;
+             }
+
+             if (!detailsValid) {
+                 withdrawMessage.textContent = 'Please fill in the required details for the selected method.';
+                 withdrawMessage.classList.add('error');
+                 withdrawMessage.style.display = 'block';
+                 tg.HapticFeedback.notificationOccurred('error');
+                 return;
+             }
+
+
+            // Simulate withdrawal process
+            console.log(`Withdrawal Request:
+                Amount: ${amount}
+                Method: ${method}
+                Details: ${JSON.stringify(details)}
+                Timestamp: ${new Date().toISOString()}
+                User: ${JSON.stringify(userData.telegramUser || {id: 'guest'})}
+            `);
+
+             // Simulate sending to "localhost" (just log it)
+             if (method === 'localhost') {
+                 console.log("--- LOCALHOST SIMULATION ---");
+                 console.log("Data that would be sent:", details);
+                 // In a real scenario with a local server:
+                 // fetch('http://localhost:3000/withdraw', { // Example endpoint
+                 //     method: 'POST',
+                 //     headers: { 'Content-Type': 'application/json' },
+                 //     body: JSON.stringify(details)
+                 // }).then(response => response.json())
+                 // .then(data => console.log("Localhost response:", data))
+                 // .catch(error => console.error("Localhost fetch error:", error));
+             }
+
+
+            // Deduct points
+            userData.points -= amount;
+            updatePointsDisplay();
+            saveData();
+
+            // Show success message
+             withdrawMessage.textContent = `Withdrawal request for ${amount} points via ${method} submitted successfully (Simulation).`;
+             withdrawMessage.classList.add('success');
+             withdrawMessage.style.display = 'block';
+             tg.HapticFeedback.notificationOccurred('success');
+
+
+            // Optionally clear the form
+             withdrawAmountInput.value = '';
+             document.getElementById('paypalEmail').value = '';
+             document.getElementById('bankAccount').value = '';
+             document.getElementById('bankRouting').value = '';
+             document.getElementById('cryptoAddress').value = '';
+             updateWithdrawButtonState();
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            // Navigation
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showPage(button.dataset.page);
+                });
+            });
+
+            // Tapping
+             // Use touchstart for faster response on mobile, fallback to click
+            catButton.addEventListener('touchstart', (e) => {
+                 e.preventDefault(); // Prevent ghost clicks
+                 handleTap(e.touches[0]); // Pass touch coordinates
+            }, { passive: false });
+             // Add click listener as fallback or for desktop
+            catButton.addEventListener('click', (e) => {
+                 // Only trigger click if not recently triggered by touchstart
+                 if (!catButton.dataset.touched) {
+                    handleTap(e);
+                 }
+                 delete catButton.dataset.touched; // Clean up flag
+            });
+            // Set a flag on touchend to potentially ignore the subsequent click event
+            catButton.addEventListener('touchend', () => {
+                catButton.dataset.touched = 'true';
+                // Remove the flag shortly after, in case click doesn't fire
+                setTimeout(() => delete catButton.dataset.touched, 300);
             });
 
 
-            // --- Initialization ---
-            loadGameState();    // Load saved state or defaults
-            applyTheme(gameState.theme); // Apply loaded theme
-            updateScoreUI();    // Set initial UI values
-            updateEnergyUI();
-            setActivePage(gameState.activePage); // Set initial page
+            // Withdrawal
+             withdrawMethodSelect.addEventListener('change', updateWithdrawMethodDetails);
+             withdrawAmountInput.addEventListener('input', updateWithdrawButtonState);
+            submitWithdrawalButton.addEventListener('click', handleWithdraw);
+        }
 
-            // Start energy refill loop
-            setInterval(refillEnergy, 1000); // Check every second
+        // --- Start the App ---
+         // Ensure the DOM is fully loaded before initializing
+         document.addEventListener('DOMContentLoaded', initApp);
 
-            // Save state when the user leaves the page/app
-            window.addEventListener('beforeunload', saveGameState);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
-                    saveGameState();
-                } else {
-                    // Optional: When returning, recalculate energy based on last save
-                    // This is partially handled by the load/refill logic already
-                    loadGameState(); // Reload to capture offline progress accurately
-                    updateEnergyUI();
-                }
-            });
-
-            console.log("TapSwap WebApp Initialized");
-            // tg.HapticFeedback.notificationOccurred('success'); // Example haptic feedback
-
-        });
     </script>
-
 </body>
 </html>
