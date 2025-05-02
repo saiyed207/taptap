@@ -274,8 +274,6 @@
         #catButton:active { /* Use :active pseudo-class */
             transform: scale(0.92); /* Slightly larger scale down */
         }
-        /* Remove the #catButton:active #catImage selector as :active applies to the button itself */
-
 
         .score-display {
             font-size: 3.2em; /* Even larger score */
@@ -558,6 +556,17 @@
             background-color: rgba(0, 0, 0, 0.7); /* Keep dark overlay simple */
          }
 
+          /* Shake animation for energy bar */
+         @keyframes shake {
+           0%, 100% { transform: translateX(0); }
+           25% { transform: translateX(-3px); }
+           75% { transform: translateX(3px); }
+         }
+         .energy-section.shake {
+             animation: shake 0.3s ease-in-out;
+         }
+
+
     </style>
 </head>
 <body>
@@ -697,11 +706,10 @@
         </nav>
     </div>
 
-    <!-- JavaScript remains the same -->
     <script>
         const tg = window.Telegram.WebApp;
 
-        // --- DOM Elements ---
+        // --- DOM Elements (Define ALL relevant elements upfront) ---
         const loadingOverlay = document.getElementById('loadingOverlay');
         const content = document.getElementById('content');
         const pages = document.querySelectorAll('.page');
@@ -714,17 +722,23 @@
         const energyLevelDisplay = document.getElementById('energyLevel');
         const energyBar = document.getElementById('energyBar');
         const taskList = document.getElementById('taskList');
-        const withdrawAmountInput = document.getElementById('withdrawAmount');
-        const withdrawMethodSelect = document.getElementById('withdrawMethod');
-        const submitWithdrawalButton = document.getElementById('submitWithdrawal');
-        const withdrawMessage = document.getElementById('withdrawMessage');
         const profileName = document.getElementById('profileName');
         const profileUserId = document.getElementById('profileUserId');
         const profileJoinDate = document.getElementById('profileJoinDate');
         const profileReferral = document.getElementById('profileReferral');
-         const profilePic = document.getElementById('profilePic');
-         const methodDetailsDiv = document.getElementById('methodDetails');
-         const detailFields = methodDetailsDiv.querySelectorAll('.detail-field');
+        const profilePic = document.getElementById('profilePic');
+        // Withdraw page elements
+        const withdrawAmountInput = document.getElementById('withdrawAmount');
+        const withdrawMethodSelect = document.getElementById('withdrawMethod');
+        const submitWithdrawalButton = document.getElementById('submitWithdrawal');
+        const withdrawMessage = document.getElementById('withdrawMessage');
+        const methodDetailsDiv = document.getElementById('methodDetails');
+        const detailFields = methodDetailsDiv.querySelectorAll('.detail-field');
+        // **FIX:** Define withdrawal input fields globally
+        const paypalEmailInput = document.getElementById('paypalEmail');
+        const bankAccountInput = document.getElementById('bankAccount');
+        const bankRoutingInput = document.getElementById('bankRouting');
+        const cryptoAddressInput = document.getElementById('cryptoAddress');
 
 
         // --- Game State & Config ---
@@ -732,16 +746,16 @@
         const ENERGY_REFILL_RATE = 2; // Energy points per second
         const ENERGY_PER_TAP = 1; // Energy cost per tap
         const POINTS_PER_TAP = 1; // Points earned per tap
-        const LOCAL_STORAGE_KEY = 'tapSwapCloneData_v2'; // Updated key if needed for new structure/defaults
+        const LOCAL_STORAGE_KEY = 'tapSwapCloneData_v2'; // Updated key if needed
         const TASK_REWARD = 1000;
 
-         // Define tasks (including icons)
+         // Define tasks (using the refined list for variety)
         const TASKS = [
             { id: 0, title: "Watch Intro Video", description: `+${TASK_REWARD} Points`, completed: false, icon: 'youtube' },
             { id: 1, title: "Watch Gameplay Tutorial", description: `+${TASK_REWARD} Points`, completed: false, icon: 'youtube' },
-            { id: 2, title: "Follow on X (Twitter)", description: `+${TASK_REWARD} Points`, completed: false, icon: 'generic' }, // Example non-youtube
+            { id: 2, title: "Follow on X (Twitter)", description: `+${TASK_REWARD} Points`, completed: false, icon: 'generic' },
             { id: 3, title: "Subscribe to Channel", description: `+${TASK_REWARD} Points`, completed: false, icon: 'youtube' },
-            { id: 4, title: "Join Telegram Group", description: `+${TASK_REWARD} Points`, completed: false, icon: 'generic' }, // Example non-youtube
+            { id: 4, title: "Join Telegram Group", description: `+${TASK_REWARD} Points`, completed: false, icon: 'generic' },
         ];
 
         let userData = {
@@ -750,7 +764,7 @@
             maxEnergy: MAX_ENERGY,
             lastEnergyUpdate: Date.now(),
             joinDate: null,
-            tasks: TASKS.map(task => ({ id: task.id, completed: false })), // Store only completion status
+            tasks: TASKS.map(task => ({ id: task.id, completed: false })),
             telegramUser: null
         };
 
@@ -759,18 +773,18 @@
             console.log("Initializing App (Refined UI)...");
             tg.ready();
 
-            // Apply Telegram theme first
             applyTheme();
             tg.onEvent('themeChanged', applyTheme);
 
-            // Expand the Web App to full height
             tg.expand();
-            tg.disableVerticalSwipes(); // Prevent pull-to-refresh interference
+             try { // Add try-catch for older Telegram versions
+                 tg.disableVerticalSwipes();
+             } catch (e) {
+                 console.warn("disableVerticalSwipes not supported:", e.message);
+             }
 
-            // Load user data
             loadData();
 
-             // Get Telegram User Info
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 userData.telegramUser = tg.initDataUnsafe.user;
                 console.log("Telegram User:", userData.telegramUser);
@@ -784,113 +798,98 @@
                 console.warn("Telegram user data not available.");
                 profileName.textContent = "Guest User";
                 profileUserId.textContent = "N/A";
-                 profileJoinDate.textContent = userData.joinDate ? new Date(userData.joinDate).toLocaleDateString() : new Date().toLocaleDateString();
+                profileJoinDate.textContent = userData.joinDate ? new Date(userData.joinDate).toLocaleDateString() : new Date().toLocaleDateString();
+                 generateReferralLink(); // Still call to set default state
             }
 
-            // Set up initial UI states
             updatePointsDisplay();
-            refillEnergy(); // Calculate initial energy based on time elapsed since last load
-            updateEnergyDisplay(); // Display calculated energy
+            refillEnergy();
+            updateEnergyDisplay();
             renderTasks();
-            showPage('tapPage'); // Default page
+            showPage('tapPage');
 
-            // Set up event listeners
-            setupEventListeners();
+            setupEventListeners(); // Ensure this is called *after* elements are defined
 
-            // Start energy refill interval
             setInterval(refillEnergy, 1000);
 
-            // Hide loading overlay
-             // Use a slight delay to ensure rendering is complete before hiding
+            // Hide loading overlay smoothly
             setTimeout(() => {
                  loadingOverlay.style.opacity = '0';
-                 setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300); // Remove from layout after fade
-             }, 100); // Small delay
+                 setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
+             }, 100);
 
              console.log("App Initialized (Refined UI).");
         }
 
+         // --- Theme Application --- (Using the refined version)
          function applyTheme() {
-            const themeParams = tg.themeParams;
+            const themeParams = tg.themeParams || {}; // Use empty object if undefined
             console.log("Applying theme:", themeParams);
             const root = document.documentElement.style;
 
-            // Helper to set CSS variable only if the theme provides it
-            const setVar = (varName, tgValue) => {
-                if (tgValue) {
-                    root.setProperty(varName, tgValue);
-                }
+            const setVar = (varName, tgValue, fallbackValue) => {
+                root.setProperty(varName, tgValue || fallbackValue);
             };
 
-            setVar('--background-color', themeParams.bg_color);
-            setVar('--text-color', themeParams.text_color);
-            setVar('--hint-color', themeParams.hint_color);
-            setVar('--link-color', themeParams.link_color);
-            setVar('--primary-color', themeParams.button_color); // Use button_color for primary actions
-            setVar('--bottom-nav-icon-active-color', themeParams.button_color); // Active nav uses button color
-            setVar('--fallback-button-text-color', themeParams.button_text_color); // Use this for button text
-            setVar('--card-bg', themeParams.secondary_bg_color);
-            setVar('--bottom-nav-bg', themeParams.secondary_bg_color);
-            setVar('--border-color', themeParams.secondary_bg_color ? colorMix(themeParams.secondary_bg_color, themeParams.hint_color || '#888888', 0.1) : '#eef0f2'); // Mix secondary with hint for subtle border
+            // Use fallback values defined in :root CSS
+            setVar('--primary-color', themeParams.button_color, 'var(--fallback-button-color)');
+            setVar('--secondary-color', themeParams.hint_color, 'var(--fallback-hint-color)');
+            setVar('--background-color', themeParams.bg_color, 'var(--fallback-bg-color)');
+            setVar('--text-color', themeParams.text_color, 'var(--fallback-text-color)');
+            setVar('--card-bg', themeParams.secondary_bg_color, 'var(--fallback-secondary-bg-color)');
+            setVar('--bottom-nav-bg', themeParams.secondary_bg_color, 'var(--fallback-secondary-bg-color)');
+            setVar('--fallback-button-text-color', themeParams.button_text_color, '#ffffff'); // Set button text var
 
-            // Toggle dark class based on color scheme or simple brightness check
+             // Update derived variables or specific elements if needed
+             setVar('--bottom-nav-icon-active-color', themeParams.button_color, 'var(--fallback-link-color)');
+             setVar('--border-color', themeParams.secondary_bg_color ? colorMix(themeParams.secondary_bg_color, themeParams.hint_color || '#888888', 0.1) : 'var(--fallback-border-color, #eef0f2)');
+
+
             const isDark = tg.colorScheme === 'dark' || (themeParams.bg_color && isColorDark(themeParams.bg_color));
             document.body.classList.toggle('dark', isDark);
-            console.log(`Theme set. Dark mode: ${isDark}`);
+            console.log(`Theme applied. Dark mode: ${isDark}`);
         }
 
-        // Helper to mix colors (basic version) - needed for border calculation
+        // Helper to mix colors (basic version for border)
         function colorMix(color1, color2, weight) {
-            // Basic placeholder - real implementation would parse hex/rgb and interpolate
-            // For now, just return a slightly modified version of color1 or a default
-            // This is complex to do perfectly without a library.
-            // Let's return a slightly darker/lighter version of color1 for simplicity.
+             // Basic placeholder - returns a slightly modified version of color1 or fallback
             try {
                 let c1 = color1.replace('#','');
                 if (c1.length === 3) c1 = c1.split('').map(c=>c+c).join('');
                 let r = parseInt(c1.substring(0,2), 16);
                 let g = parseInt(c1.substring(2,4), 16);
                 let b = parseInt(c1.substring(4,6), 16);
-                // Simple darken/lighten - adjust factor as needed
-                let factor = isColorDark(color1) ? 1.2 : 0.9;
+                let factor = isColorDark(color1) ? 1.15 : 0.9; // Adjust factor for subtle difference
                 r = Math.min(255, Math.max(0, Math.round(r * factor)));
                 g = Math.min(255, Math.max(0, Math.round(g * factor)));
                 b = Math.min(255, Math.max(0, Math.round(b * factor)));
                 return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
             } catch {
-                return color2; // fallback
+                return color2 || '#e0e0e0'; // Use hint or a light gray fallback
             }
         }
 
-
-         function isColorDark(hexColor) {
+        function isColorDark(hexColor) {
             if (!hexColor) return false;
              try {
                 hexColor = hexColor.replace(/^#/, '');
-                if (hexColor.length === 3) {
-                    hexColor = hexColor.split('').map(char => char + char).join('');
-                }
+                if (hexColor.length === 3) hexColor = hexColor.split('').map(char => char + char).join('');
                 if (hexColor.length !== 6) return false;
-
                 const r = parseInt(hexColor.substring(0, 2), 16);
                 const g = parseInt(hexColor.substring(2, 4), 16);
                 const b = parseInt(hexColor.substring(4, 6), 16);
                 const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
                 return luminance < 0.5;
-             } catch (e) {
-                 console.error("Error checking color darkness:", e);
-                 return false;
-             }
+             } catch (e) { return false; }
         }
 
-
-        // --- Data Persistence ---
+        // --- Data Persistence --- (Using refined version)
         function saveData() {
             try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userData));
             } catch (e) {
                 console.error("Error saving data to localStorage:", e);
-                 tg.showPopup({ title: 'Storage Error', message: 'Could not save progress. Storage might be full.', buttons: [{ type: 'ok' }] });
+                 try { tg.showPopup({ title: 'Storage Error', message: 'Could not save progress.', buttons: [{ type: 'ok' }] }); } catch {}
             }
         }
 
@@ -899,15 +898,13 @@
             if (savedData) {
                 try {
                     const parsedData = JSON.parse(savedData);
-                    // Merge loaded data carefully
                     userData.points = Number(parsedData.points) || 0;
-                    userData.maxEnergy = Number(parsedData.maxEnergy) || MAX_ENERGY; // Allow max energy to be saved
+                    userData.maxEnergy = Number(parsedData.maxEnergy) || MAX_ENERGY;
                     userData.energy = Math.min(Number(parsedData.energy) || 0, userData.maxEnergy);
                     userData.lastEnergyUpdate = Number(parsedData.lastEnergyUpdate) || Date.now();
                     userData.joinDate = parsedData.joinDate || null;
-                    userData.telegramUser = parsedData.telegramUser || userData.telegramUser; // Keep existing if loaded is null
+                    userData.telegramUser = parsedData.telegramUser || userData.telegramUser;
 
-                    // Task merging: Ensure all current tasks exist, preserving completion status
                     const loadedTasks = parsedData.tasks || [];
                     const currentTaskMap = new Map(loadedTasks.map(t => [t.id, t.completed]));
                     userData.tasks = TASKS.map(taskDef => ({
@@ -919,24 +916,23 @@
                 } catch (e) {
                     console.error("Error parsing saved data:", e);
                      localStorage.removeItem(LOCAL_STORAGE_KEY);
-                     // Initialize joinDate if reset
                      if (!userData.joinDate) userData.joinDate = new Date().toISOString();
                 }
             } else {
                  console.log("No saved data found, using defaults.");
                  if (!userData.joinDate) userData.joinDate = new Date().toISOString();
-                 saveData(); // Save initial default state
+                 saveData();
             }
         }
 
-        // --- UI Update Functions ---
+        // --- UI Update Functions --- (Using refined versions)
         function updatePointsDisplay() {
             const formattedPoints = Math.floor(userData.points).toLocaleString('en-US');
             pointsDisplay.textContent = formattedPoints;
             profilePoints.textContent = formattedPoints;
             withdrawPointsAvailable.textContent = formattedPoints;
-             withdrawAmountInput.max = Math.floor(userData.points);
-             updateWithdrawButtonState();
+            if(withdrawAmountInput) withdrawAmountInput.max = Math.floor(userData.points);
+            updateWithdrawButtonState();
         }
 
         function updateEnergyDisplay() {
@@ -954,205 +950,143 @@
                 if (userData.telegramUser.photo_url) {
                     profilePic.src = userData.telegramUser.photo_url;
                     profilePic.style.backgroundImage = 'none';
-                     profilePic.onerror = () => { // Fallback if image fails to load
+                    profilePic.onerror = () => { // Fallback if image fails
                          profilePic.src = '';
                          profilePic.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23e0e0e0"/><path d="M50 42c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm0 28c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" fill="%23a0a0a0"/><path d="M76 64c0-11-8.5-20-19.3-21.7 1.1-1.6 1.8-3.5 1.8-5.6 0-5.5-4.5-10-10-10s-10 4.5-10 10c0 2.1.6 4 1.8 5.6C28.5 44 20 53 20 64v6h60v-6z" fill="%23a0a0a0"/></svg>')`;
-                     }
+                    }
                 } else {
-                     profilePic.src = ''; // Ensure src is empty if no photo_url
-                     profilePic.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23e0e0e0"/><path d="M50 42c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm0 28c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" fill="%23a0a0a0"/><path d="M76 64c0-11-8.5-20-19.3-21.7 1.1-1.6 1.8-3.5 1.8-5.6 0-5.5-4.5-10-10-10s-10 4.5-10 10c0 2.1.6 4 1.8 5.6C28.5 44 20 53 20 64v6h60v-6z" fill="%23a0a0a0"/></svg>')`;
+                    profilePic.src = '';
+                    profilePic.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23e0e0e0"/><path d="M50 42c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm0 28c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" fill="%23a0a0a0"/><path d="M76 64c0-11-8.5-20-19.3-21.7 1.1-1.6 1.8-3.5 1.8-5.6 0-5.5-4.5-10-10-10s-10 4.5-10 10c0 2.1.6 4 1.8 5.6C28.5 44 20 53 20 64v6h60v-6z" fill="%23a0a0a0"/></svg>')`;
                 }
             }
-            profileJoinDate.textContent = userData.joinDate ? new Date(userData.joinDate).toLocaleDateString() : 'N/A';
+             profileJoinDate.textContent = userData.joinDate ? new Date(userData.joinDate).toLocaleDateString() : 'N/A';
         }
 
-         function generateReferralLink() {
-             // This should ideally come from a backend, but we simulate it
+        function generateReferralLink() {
+             const refSpan = profileReferral; // Use the defined element
              if (userData.telegramUser && userData.telegramUser.id) {
-                 // Example: Replace YourTapSwapBot with your actual bot username
-                 const botUsername = tg.initDataUnsafe.query_id ? 'YourActualBotUsername' : 'DemoBot'; // Placeholder
-                 profileReferral.textContent = `t.me/${botUsername}?start=${userData.telegramUser.id}`;
-                 profileReferral.onclick = () => {
-                    try {
-                        tg.openTelegramLink(profileReferral.textContent);
-                    } catch (e) { console.error("Failed to open Telegram link", e);}
+                 const botUsername = 'YourTapSwapBot'; // Replace with your bot's username
+                 const link = `t.me/${botUsername}?start=${userData.telegramUser.id}`;
+                 refSpan.textContent = link;
+                 refSpan.onclick = () => {
+                    try { tg.openTelegramLink(link); } catch (e) { console.error("Failed to open TG link", e); }
                  };
-                 profileReferral.style.cursor = 'pointer';
-                 profileReferral.style.color = 'var(--link-color)';
+                 refSpan.style.cursor = 'pointer';
+                 refSpan.style.color = 'var(--tg-theme-link-color, var(--fallback-link-color))';
              } else {
-                 profileReferral.textContent = 'N/A';
-                 profileReferral.onclick = null;
-                 profileReferral.style.cursor = 'default';
-                  profileReferral.style.color = 'inherit';
+                 refSpan.textContent = 'N/A';
+                 refSpan.onclick = null;
+                 refSpan.style.cursor = 'default';
+                 refSpan.style.color = 'var(--tg-theme-text-color, var(--fallback-text-color))'; // Reset color
              }
          }
 
-
-        // --- Navigation ---
+        // --- Navigation --- (Using refined version)
         function showPage(pageId) {
             let foundPage = false;
             pages.forEach(page => {
                 const isActive = page.id === pageId;
                 page.classList.toggle('active', isActive);
-                 if(isActive) foundPage = true;
+                if(isActive) foundPage = true;
             });
 
-            // If somehow the pageId is invalid, default to tapPage
-             if (!foundPage) {
+            if (!foundPage) {
                  console.warn(`Page ID "${pageId}" not found, defaulting to tapPage.`);
                  pageId = 'tapPage';
                  document.getElementById('tapPage').classList.add('active');
-             }
-
+            }
 
             navButtons.forEach(button => {
                 button.classList.toggle('active', button.dataset.page === pageId);
             });
 
-             content.scrollTop = 0; // Scroll to top
+            if (content) content.scrollTop = 0; // Scroll to top
 
-            // Refresh dynamic content on the active page
-             switch(pageId) {
-                case 'profilePage':
-                    displayProfileInfo();
-                    updatePointsDisplay();
-                    break;
-                case 'taskPage':
-                    renderTasks();
-                    updatePointsDisplay();
-                    break;
-                case 'withdrawPage':
-                    updatePointsDisplay();
-                    updateWithdrawMethodDetails();
-                    break;
-                case 'tapPage':
-                default: // Handle default case (tapPage)
-                    updatePointsDisplay();
-                    updateEnergyDisplay();
-                    break;
-             }
-             console.log("Showing page:", pageId);
+            switch(pageId) {
+                case 'profilePage': displayProfileInfo(); updatePointsDisplay(); break;
+                case 'taskPage': renderTasks(); updatePointsDisplay(); break;
+                case 'withdrawPage': updatePointsDisplay(); updateWithdrawMethodDetails(); updateWithdrawButtonState(); break; // Ensure button state is updated on page show
+                case 'tapPage': default: updatePointsDisplay(); updateEnergyDisplay(); break;
+            }
+            console.log("Showing page:", pageId);
         }
 
-        // --- Game Logic ---
+        // --- Game Logic --- (Using refined versions)
         function handleTap(event) {
             if (userData.energy >= ENERGY_PER_TAP) {
-                 // Debounce taps slightly to prevent issues with rapid multi-touch
                  const now = Date.now();
-                 if (catButton.dataset.lastTap && (now - parseInt(catButton.dataset.lastTap) < 50)) { // 50ms debounce
-                    return;
-                 }
+                 if (catButton.dataset.lastTap && (now - parseInt(catButton.dataset.lastTap) < 50)) return;
                  catButton.dataset.lastTap = now.toString();
 
-
                 userData.points += POINTS_PER_TAP;
-                userData.energy = Math.max(0, userData.energy - ENERGY_PER_TAP); // Ensure energy doesn't go below 0
-                userData.lastEnergyUpdate = Date.now(); // Reset refill timer on tap
+                userData.energy = Math.max(0, userData.energy - ENERGY_PER_TAP);
+                userData.lastEnergyUpdate = Date.now();
 
                 updatePointsDisplay();
                 updateEnergyDisplay();
-                saveData(); // Save after successful tap
+                saveData();
 
-                // Visual Feedback - use the :active state in CSS now
-                // catImage.style.transform = 'scale(0.95)'; // Already handled by :active CSS
-                // setTimeout(() => {
-                //     catImage.style.transform = 'scale(1)';
-                // }, 80); // Quick recovery
+                const x = event.clientX || (catButton.offsetLeft + catButton.offsetWidth / 2);
+                const y = event.clientY || (catButton.offsetTop + catButton.offsetHeight / 2);
+                createFloatingText(`+${POINTS_PER_TAP}`, x, y);
 
-                // Floating number feedback
-                 // Use clientX/Y from the event if available, otherwise center it
-                 const x = event.clientX || (catButton.offsetLeft + catButton.offsetWidth / 2);
-                 const y = event.clientY || (catButton.offsetTop + catButton.offsetHeight / 2);
-                 createFloatingText(`+${POINTS_PER_TAP}`, x, y);
-
-                 // Haptic feedback for tap
-                 tg.HapticFeedback.impactOccurred('light'); // 'light', 'medium', 'heavy', or 'rigid', 'soft'
+                try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
 
             } else {
-                // Optional: Indicate lack of energy
-                // console.log("Not enough energy!");
-                 tg.HapticFeedback.notificationOccurred('error');
-                 // Maybe shake the energy bar?
+                 try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
                  const energySection = document.querySelector('.energy-section');
                  if(energySection) {
-                    energySection.style.animation = 'shake 0.3s ease-in-out';
-                    setTimeout(() => energySection.style.animation = '', 300);
+                    energySection.classList.add('shake');
+                    setTimeout(() => energySection.classList.remove('shake'), 300);
                  }
             }
         }
-         // Add CSS for shake animation
-         const styleSheet = document.styleSheets[0];
-         styleSheet.insertRule(`
-            @keyframes shake {
-              0%, 100% { transform: translateX(0); }
-              25% { transform: translateX(-3px); }
-              75% { transform: translateX(3px); }
-            }
-         `, styleSheet.cssRules.length);
-
 
         function createFloatingText(text, x, y) {
             const feedback = document.createElement('div');
             feedback.textContent = text;
             feedback.className = 'tap-feedback';
-            // Adjust position relative to viewport, not button
             feedback.style.left = `${x}px`;
             feedback.style.top = `${y}px`;
-            // Offset slightly so it doesn't start exactly on the finger
-            feedback.style.transform = 'translate(-50%, -100%)'; // Center horizontally, start above finger
+            feedback.style.transform = 'translate(-50%, -100%)';
 
             document.body.appendChild(feedback);
 
             feedback.addEventListener('animationend', () => {
-                if (feedback.parentNode) {
-                    feedback.remove();
-                }
+                if (feedback.parentNode) feedback.remove();
             });
         }
 
-
         function refillEnergy() {
             const now = Date.now();
-            const timeElapsed = (now - userData.lastEnergyUpdate) / 1000; // seconds
+            const timeElapsed = (now - userData.lastEnergyUpdate) / 1000;
 
             if (userData.energy < userData.maxEnergy && timeElapsed > 0) {
                 const energyToRefill = timeElapsed * ENERGY_REFILL_RATE;
-                const prevEnergy = userData.energy;
+                const prevEnergyFloor = Math.floor(userData.energy);
                 userData.energy = Math.min(userData.maxEnergy, userData.energy + energyToRefill);
+                const currentEnergyFloor = Math.floor(userData.energy);
 
-                // Only save if energy actually increased noticeably
-                if (Math.floor(userData.energy) > Math.floor(prevEnergy)) {
-                    userData.lastEnergyUpdate = now; // Update timestamp *only* when energy effectively changes
+                // Update display and save only if the floored value changes or max is reached
+                if (currentEnergyFloor > prevEnergyFloor || (userData.energy === userData.maxEnergy && prevEnergyFloor < currentEnergyFloor)) {
+                    userData.lastEnergyUpdate = now;
                     saveData();
-                    updateEnergyDisplay(); // Update display only when it changes
-                } else if(userData.energy === userData.maxEnergy && prevEnergy < userData.maxEnergy) {
-                    // Handle reaching full energy - update display and save state
-                     userData.lastEnergyUpdate = now;
-                     saveData();
-                     updateEnergyDisplay();
+                    updateEnergyDisplay();
                 }
-                // If no significant change, don't save, don't update display (prevents constant updates/saves)
-
             } else if (userData.energy >= userData.maxEnergy) {
-                 // Ensure last update time is current if energy is full, prevents large jump after inactivity period ends
+                 // Keep timestamp current even when full
                  userData.lastEnergyUpdate = now;
             }
-            // Optimization: If energy is full, we don't need constant display updates unless it just became full.
-            // The display update is now inside the conditional blocks above.
         }
 
 
-        // --- Task Logic ---
+        // --- Task Logic --- (Using refined versions)
         function renderTasks() {
-            taskList.innerHTML = ''; // Clear existing tasks
+            taskList.innerHTML = '';
             TASKS.forEach((taskInfo) => {
-                 // Find the corresponding user progress for this task
                 const userTaskData = userData.tasks.find(t => t.id === taskInfo.id);
-                // Default to incomplete if not found (e.g., new task added)
                 const isCompleted = userTaskData ? userTaskData.completed : false;
-
                 const li = document.createElement('li');
-
                 let iconSvg = getTaskIconSvg(taskInfo.icon);
 
                 li.innerHTML = `
@@ -1160,7 +1094,6 @@
                     <div class="task-info">
                         <div class="task-title">${taskInfo.title}</div>
                         <div class="task-reward">
-                            <!-- Coin Icon -->
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.99 14.71L10 15.03V9h2v5.03l2.01 1.68-.99 1z"/></svg>
                             ${taskInfo.description}
                         </div>
@@ -1173,103 +1106,90 @@
                 const button = li.querySelector('.task-button');
                 if (isCompleted) {
                     button.classList.add('completed');
-                     button.textContent = 'Claimed'; // Change text for clarity
+                    button.textContent = 'Claimed';
                 } else {
                     button.addEventListener('click', () => completeTask(taskInfo.id));
                 }
-
                 taskList.appendChild(li);
             });
         }
 
         function getTaskIconSvg(iconType) {
-             // Add more icons as needed
              switch(iconType) {
                  case 'youtube':
-                    return `<svg viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.9-1.52-1.76-1.76C18.25 5 12 5 12 5s-6.25 0-7.82.43c-.86.24-1.52.9-1.76 1.76C2 8.75 2 12 2 12s0 3.25.43 4.81c.23.86.9 1.52 1.76 1.76C5.75 19 12 19 12 19s6.25 0 7.82-.43c.86-.24 1.52.9 1.76-1.76C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>`;
-                 case 'generic': // A generic task/link icon
-                 default:
-                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10.59 13.41c.44-.44.44-1.16 0-1.6L7.03 8.25a.75.75 0 0 0-1.06 1.06L9.53 12l-3.56 3.5a.75.75 0 0 0 1.06 1.06l3.56-3.56zm2.82-1.6a.5.5 0 0 0 0 .71l3.56 3.56a.5.5 0 0 0 .71-.71L14.12 12l3.56-3.5a.5.5 0 0 0-.71-.71l-3.56 3.5a.5.5 0 0 0 0 .71z"/></svg>`; // Link icon
+                    return `<svg viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.9-1.52-1.76-1.76C18.25 5 12 5 12 5s-6.25 0-7.82.43c-.86.24-1.52.9-1.76 1.76C2 8.75 2 12 2 12s0 3.25.43 4.81c.23.86.9 1.52 1.76 1.76C5.75 19 12 19 12 19s6.25 0 7.82-.43c.86-.24 1.52-.9 1.76-1.76C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>`;
+                 case 'generic': default:
+                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>`; // Link icon
              }
         }
 
-
         function completeTask(taskId) {
             const taskIndex = userData.tasks.findIndex(t => t.id === taskId);
-            const taskInfo = TASKS.find(t => t.id === taskId); // Get task definition
+            const taskInfo = TASKS.find(t => t.id === taskId);
 
             if (taskIndex !== -1 && taskInfo && !userData.tasks[taskIndex].completed) {
-                // Simulate action based on task type (very basic)
                 console.log(`Attempting task ${taskId}: ${taskInfo.title}`);
+                const button = taskList.querySelector(`.task-button[data-task-id="${taskId}"]`);
+                if(button) button.disabled = true;
 
-                // --- Real App Logic Placeholder ---
-                // Example: If it's a "Join Telegram Group" task, you might use:
-                // if (taskInfo.title.includes("Telegram Group")) {
-                //     tg.openTelegramLink("https://t.me/YourGroupName");
-                //     // Problem: You can't easily verify if they *actually* joined from the WebApp side alone.
-                //     // This often requires backend integration or manual claim buttons.
-                // } else if (taskInfo.icon === 'youtube') {
-                //     tg.openLink("https://youtube.com/YourVideoLink");
-                // } else {
-                //     // Open a generic link or perform another action
-                //     tg.openLink("https://yoursite.com/taskSpecificPage");
-                // }
-                // For this demo, we just simulate success immediately.
-                // --- End Placeholder ---
-
-                 // Use a small delay to simulate an action/check
-                 const button = taskList.querySelector(`.task-button[data-task-id="${taskId}"]`);
-                 if(button) button.disabled = true; // Temporarily disable during "check"
-
-                 setTimeout(() => {
+                // --- Placeholder for actual task action ---
+                 // Example: tg.openLink(...) or tg.openTelegramLink(...)
+                 // For demo, simulate success after delay
+                setTimeout(() => {
                     console.log(`Marking task ${taskId} as complete.`);
-                    tg.HapticFeedback.notificationOccurred('success');
+                    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
 
                     userData.tasks[taskIndex].completed = true;
                     userData.points += TASK_REWARD;
 
                     updatePointsDisplay();
                     saveData();
-                    renderTasks(); // Re-render to update button to "Claimed" state
+                    renderTasks(); // Update UI
 
-                    tg.showPopup({
-                        title: 'Task Complete!',
-                        message: `You earned ${TASK_REWARD.toLocaleString()} points for completing "${taskInfo.title}".`,
-                        buttons: [{ type: 'ok' }]
-                    });
-                }, 500); // Simulate 0.5 second action/verification
+                    try {
+                        tg.showPopup({
+                            title: 'Task Complete!',
+                            message: `You earned ${TASK_REWARD.toLocaleString()} points.`,
+                            buttons: [{ type: 'ok' }]
+                        });
+                    } catch (e) { alert(`Task Complete! +${TASK_REWARD} points.`); }
+
+                }, 500);
             }
         }
 
-        // --- Withdraw Logic ---
+        // --- Withdraw Logic --- (Using refined versions)
          function updateWithdrawMethodDetails() {
              const selectedMethod = withdrawMethodSelect.value;
              detailFields.forEach(field => {
-                 // Use CSS class toggling for potentially smoother transitions if CSS is set up
                  field.style.display = field.classList.contains(`${selectedMethod}-field`) ? 'block' : 'none';
              });
          }
 
          function updateWithdrawButtonState() {
+             // Ensure elements exist before trying to access properties
+             if (!withdrawAmountInput || !submitWithdrawalButton) return;
+
              const amount = parseFloat(withdrawAmountInput.value) || 0;
              const currentPoints = Math.floor(userData.points);
-             const minWithdrawal = 1; // Example minimum
+             const minWithdrawal = 1;
 
              let requiredDetailsFilled = true;
              const selectedMethod = withdrawMethodSelect.value;
-              if (selectedMethod === 'paypal') {
-                 if (!document.getElementById('paypalEmail').value) requiredDetailsFilled = false;
-             } else if (selectedMethod === 'wire') {
-                 if (!document.getElementById('bankAccount').value || !document.getElementById('bankRouting').value) requiredDetailsFilled = false;
-             } else if (selectedMethod === 'crypto') {
-                  if (!document.getElementById('cryptoAddress').value) requiredDetailsFilled = false;
-             }
-             // Localhost doesn't require details for this demo
+             if (selectedMethod === 'paypal' && (!paypalEmailInput || !paypalEmailInput.value)) requiredDetailsFilled = false;
+             else if (selectedMethod === 'wire' && (!bankAccountInput || !bankAccountInput.value || !bankRoutingInput || !bankRoutingInput.value)) requiredDetailsFilled = false;
+             else if (selectedMethod === 'crypto' && (!cryptoAddressInput || !cryptoAddressInput.value)) requiredDetailsFilled = false;
 
              submitWithdrawalButton.disabled = !(amount >= minWithdrawal && amount <= currentPoints && requiredDetailsFilled);
          }
 
         function handleWithdraw() {
+            // Ensure elements exist
+             if (!withdrawAmountInput || !withdrawMethodSelect || !submitWithdrawalButton || !withdrawMessage || !paypalEmailInput || !bankAccountInput || !bankRoutingInput || !cryptoAddressInput) {
+                 console.error("Withdrawal form elements not found!");
+                 return;
+             }
+
             const amount = parseFloat(withdrawAmountInput.value);
             const method = withdrawMethodSelect.value;
 
@@ -1277,100 +1197,76 @@
             withdrawMessage.textContent = '';
             withdrawMessage.className = 'withdraw-message';
 
-            // --- Input Validation ---
             if (isNaN(amount) || amount <= 0) {
-                showWithdrawMessage('Please enter a valid positive amount.', 'error');
-                return;
+                showWithdrawMessage('Please enter a valid positive amount.', 'error'); return;
             }
-             const minWithdrawal = 1; // Set your minimum withdrawal threshold
+             const minWithdrawal = 1;
              if (amount < minWithdrawal) {
-                 showWithdrawMessage(`Minimum withdrawal amount is ${minWithdrawal} points.`, 'error');
-                 return;
+                 showWithdrawMessage(`Minimum withdrawal amount is ${minWithdrawal} points.`, 'error'); return;
              }
-
             if (amount > userData.points) {
-                showWithdrawMessage('Insufficient points.', 'error');
-                return;
+                showWithdrawMessage('Insufficient points.', 'error'); return;
             }
 
-             // --- Detail Validation ---
-             let detailsValid = true;
-             let detailsPayload = { amount, method }; // Data to potentially send to backend
-             const paypalEmailInput = document.getElementById('paypalEmail');
-             const bankAccountInput = document.getElementById('bankAccount');
-             const bankRoutingInput = document.getElementById('bankRouting');
-             const cryptoAddressInput = document.getElementById('cryptoAddress');
+            let detailsValid = true;
+            let detailsPayload = { amount, method };
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-             // Simple email regex (not foolproof, but better than nothing)
-             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-             if (method === 'paypal') {
+            if (method === 'paypal') {
                  const email = paypalEmailInput.value.trim();
-                 if (!email || !emailRegex.test(email)) {
-                     detailsValid = false;
-                     paypalEmailInput.focus(); // Focus the invalid field
-                 }
+                 if (!email || !emailRegex.test(email)) { detailsValid = false; paypalEmailInput.focus(); }
                  detailsPayload.email = email;
              } else if (method === 'wire') {
                  const accNum = bankAccountInput.value.trim();
                  const routNum = bankRoutingInput.value.trim();
                   if (!accNum) { detailsValid = false; bankAccountInput.focus(); }
-                  else if (!routNum) { detailsValid = false; bankRoutingInput.focus(); } // Only focus routing if account is filled
+                  else if (!routNum) { detailsValid = false; bankRoutingInput.focus(); }
                  detailsPayload.account = accNum;
                  detailsPayload.routing = routNum;
              } else if (method === 'crypto') {
                  const address = cryptoAddressInput.value.trim();
-                 // Basic check for non-empty and reasonable length (adjust as needed)
-                 if (!address || address.length < 26 || address.length > 42 || !address.startsWith('T')) { // Example for TRC20
-                    detailsValid = false;
-                     cryptoAddressInput.focus();
+                  // Basic TRC20 check example
+                 if (!address || address.length < 26 || address.length > 42 || !address.startsWith('T')) {
+                    detailsValid = false; cryptoAddressInput.focus();
                  }
                  detailsPayload.address = address;
              }
 
              if (!detailsValid) {
-                 showWithdrawMessage('Please fill in all required details correctly for the selected method.', 'error');
+                 showWithdrawMessage('Please fill required details correctly.', 'error');
                  return;
              }
 
+            submitWithdrawalButton.disabled = true;
+            submitWithdrawalButton.textContent = 'Processing...';
+            console.log("Withdrawal Request Payload:", detailsPayload);
+            console.log("User:", JSON.stringify(userData.telegramUser || {id: 'guest'}));
 
-            // --- Process Withdrawal (Simulation) ---
-            submitWithdrawalButton.disabled = true; // Prevent double clicks
-             submitWithdrawalButton.textContent = 'Processing...';
-             console.log("Withdrawal Request Payload:", detailsPayload);
-             console.log("User:", JSON.stringify(userData.telegramUser || {id: 'guest'}));
-
-            // Simulate network request delay
             setTimeout(() => {
-                 // Simulate success
                 userData.points -= amount;
                 updatePointsDisplay();
                 saveData();
+                showWithdrawMessage(`Withdrawal for ${amount.toLocaleString()} points via ${method} submitted (Simulation).`, 'success');
+                 try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
 
-                showWithdrawMessage(`Withdrawal request for ${amount.toLocaleString()} points via ${method} submitted successfully (Simulation).`, 'success');
-                 tg.HapticFeedback.notificationOccurred('success');
-
-
-                // Clear form after successful simulation
                 withdrawAmountInput.value = '';
                  paypalEmailInput.value = '';
                  bankAccountInput.value = '';
                  bankRoutingInput.value = '';
                  cryptoAddressInput.value = '';
 
-                 // Reset button state
                  submitWithdrawalButton.textContent = 'Request Withdrawal';
-                 updateWithdrawButtonState(); // This will disable it again as amount is now empty
+                 updateWithdrawButtonState();
 
-            }, 1500); // Simulate 1.5 second processing time
+            }, 1500);
         }
 
         function showWithdrawMessage(message, type = 'info') {
              withdrawMessage.textContent = message;
-             withdrawMessage.className = `withdraw-message ${type}`; // type should be 'success' or 'error'
+             withdrawMessage.className = `withdraw-message ${type}`;
              withdrawMessage.style.display = 'block';
              if (type === 'error') {
-                tg.HapticFeedback.notificationOccurred('error');
+                try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
              }
          }
 
@@ -1379,57 +1275,55 @@
         function setupEventListeners() {
             // Navigation
             navButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    showPage(button.dataset.page);
-                });
+                button.addEventListener('click', () => showPage(button.dataset.page));
             });
 
-            // Tapping (using pointer events for better cross-device handling)
+            // Tapping (Pointer events preferred)
             let isDragging = false;
             let startY = 0;
             catButton.addEventListener('pointerdown', (e) => {
-                // Prevent default only if it's a touch event to allow text selection etc. on desktop
-                if (e.pointerType === 'touch') {
-                    e.preventDefault();
-                }
-                catButton.setPointerCapture(e.pointerId); // Capture further events for this pointer
+                if (e.pointerType === 'touch') e.preventDefault();
+                catButton.setPointerCapture(e.pointerId);
                 isDragging = false;
                 startY = e.clientY;
-                // Don't fire handleTap yet, wait for pointerup without movement
             }, { passive: false });
 
             catButton.addEventListener('pointermove', (e) => {
-                 if (Math.abs(e.clientY - startY) > 10) { // If moved vertically significantly
-                     isDragging = true;
-                 }
+                 if (Math.abs(e.clientY - startY) > 10) isDragging = true;
              });
 
-             catButton.addEventListener('pointerup', (e) => {
+            catButton.addEventListener('pointerup', (e) => {
                  catButton.releasePointerCapture(e.pointerId);
-                 if (!isDragging) { // Only fire tap if not considered a drag/scroll attempt
-                     handleTap(e);
-                 }
-                 isDragging = false; // Reset drag flag
+                 if (!isDragging) handleTap(e);
+                 isDragging = false;
              });
 
-            // Fallback click listener for non-pointer event browsers (less likely now)
+            // Fallback click for non-pointer browsers (rare)
             catButton.addEventListener('click', (e) => {
-                 // Check if pointer events are supported. If they are, the pointerup handler should manage taps.
-                 if (typeof window.PointerEvent === 'undefined') {
-                    handleTap(e);
-                 }
+                 if (typeof window.PointerEvent === 'undefined') handleTap(e);
             });
 
-            // Withdrawal Form
-            withdrawMethodSelect.addEventListener('change', () => {
-                updateWithdrawMethodDetails();
-                 updateWithdrawButtonState(); // Re-check button state as details required might change
-            });
-            // Update button state on input in any relevant field
-            [withdrawAmountInput, paypalEmailInput, bankAccountInput, bankRoutingInput, cryptoAddressInput].forEach(input => {
-                input.addEventListener('input', updateWithdrawButtonState);
-            });
-            submitWithdrawalButton.addEventListener('click', handleWithdraw);
+            // Withdrawal Form Listeners (Check if elements exist)
+             if (withdrawMethodSelect) {
+                 withdrawMethodSelect.addEventListener('change', () => {
+                     updateWithdrawMethodDetails();
+                     updateWithdrawButtonState();
+                 });
+             }
+             // Add listeners to all relevant inputs
+             const withdrawalInputs = [withdrawAmountInput, paypalEmailInput, bankAccountInput, bankRoutingInput, cryptoAddressInput];
+             withdrawalInputs.forEach(input => {
+                 if (input) { // Check if element exists before adding listener
+                    input.addEventListener('input', updateWithdrawButtonState);
+                 } else {
+                    // console.warn(`Withdrawal input element not found during listener setup.`);
+                 }
+             });
+             if (submitWithdrawalButton) {
+                submitWithdrawalButton.addEventListener('click', handleWithdraw);
+             } else {
+                console.error("Submit withdrawal button not found!");
+             }
         }
 
         // --- Start the App ---
