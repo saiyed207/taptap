@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TapSwap Clone</title>
+    <!-- Telegram WebApp Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Basic Reset & Body Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling bounce on mobile */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a2e; /* Dark background */
+            color: #e0e0e0; /* Light text */
+        }
+
+        /* Main App Container */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 500px; /* Max width for larger screens, keeps mobile feel */
+            margin: 0 auto; /* Center on larger screens */
+            background-color: #161625; /* Slightly lighter background for app area */
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        /* Main Content Area */
+        main {
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling if content exceeds height */
+            padding: 20px;
+            position: relative; /* Needed for absolute positioning inside */
+        }
+
+        /* Section Styling */
+        .section {
+            display: none; /* Hide sections by default */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Header/Points Display */
+        .points-header {
+            text-align: center;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .points-header h2 {
+            font-size: 1.8em;
+            color: #f5b72c; /* Gold color for points */
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .points-header p {
+            font-size: 0.9em;
+            color: #a0a0a0;
+        }
+
+
+        /* Tap Section Specifics */
+        #tap-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around; /* Distribute space */
+            height: 100%; /* Make tap section fill its container space */
+            padding-bottom: 80px; /* Ensure space above nav bar */
+        }
+
+        .tap-area {
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             flex-grow: 1; /* Take up available space */
+        }
+
+        .tap-target {
+            width: 180px; /* Adjust size as needed */
+            height: 180px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐱</text></svg>'); /* Simple Cat Emoji SVG */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none; /* Safari */
+            transition: transform 0.1s ease;
+            margin-bottom: 20px; /* Space below cat */
+        }
+
+        .tap-target:active {
+            transform: scale(0.92);
+        }
+
+        /* Tap Feedback Animation */
+        .tap-feedback {
+            position: absolute;
+            font-size: 1.5em;
+            color: #f5b72c;
+            opacity: 1;
+            transition: all 0.6s ease-out;
+            pointer-events: none; /* Don't interfere with clicks */
+            user-select: none;
+            -webkit-user-select: none;
+            font-weight: bold;
+        }
+
+
+        /* Energy Bar */
+        .energy-bar-container {
+            width: 90%;
+            max-width: 300px; /* Limit width */
+            margin: 0 auto; /* Center it */
+            text-align: center;
+            margin-top: 10px; /* Space above bar */
+        }
+
+         .energy-label {
+             font-size: 0.9em;
+             margin-bottom: 8px;
+             color: #ccc;
+             font-weight: bold;
+         }
+         .energy-label span {
+             color: #f5b72c;
+             font-size: 1.1em;
+         }
+
+        .energy-bar {
+            height: 18px;
+            background-color: #333; /* Dark background for bar */
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+
+        .energy-bar-fill {
+            height: 100%;
+            width: 100%; /* Start full */
+            background: linear-gradient(90deg, #f5b72c, #ff8c00); /* Gradient fill */
+            border-radius: 9px 0 0 9px; /* Keep left radius */
+            transition: width 0.2s linear; /* Smooth transition for energy decrease */
+        }
+
+
+        /* Other Section Styles (Placeholders) */
+        .section h2 {
+            margin-bottom: 15px;
+            color: #f5b72c;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .section p, .section li {
+             line-height: 1.6;
+             margin-bottom: 10px;
+             color: #b0b0b0;
+        }
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .section li {
+             background: rgba(255, 255, 255, 0.05);
+             padding: 10px;
+             border-radius: 5px;
+        }
+        .section button {
+            padding: 10px 15px;
+            background-color: #f5b72c;
+            color: #161625;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        .section button:hover {
+             background-color: #ffc857;
+        }
+
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: #2c2c3e; /* Slightly different dark shade */
+            border-top: 1px solid #444;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: #a0a0a0; /* Inactive color */
+            font-size: 0.8em;
+            cursor: pointer;
+            padding: 5px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+         nav button svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 3px;
+            fill: currentColor; /* Icon color matches text */
+         }
+
+        nav button.active {
+            color: #f5b72c; /* Active color */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Main Content Area -->
+        <main>
+            <!-- Profile Section -->
+            <div id="profile-section" class="section">
+                <h2>👤 Profile</h2>
+                <p>Welcome, <strong id="user-name">User</strong>!</p>
+                <p>Here you can view your stats or connect your wallet (future feature).</p>
+                <ul>
+                    <li>Total Points: <span id="profile-points">0</span></li>
+                    <li>Energy Capacity: <span id="profile-max-energy">0</span></li>
+                    <li>Member Since: <span id="profile-join-date">N/A</span></li>
+                </ul>
+                <!-- Add more profile details here -->
+            </div>
+
+            <!-- Tap Section (Default) -->
+            <div id="tap-section" class="section active">
+                <div class="points-header">
+                    <h2 id="points-display">0</h2>
+                    <p>Total Points</p>
+                </div>
+
+                <div class="tap-area">
+                   <div id="tap-cat" class="tap-target"></div>
+                   <div id="tap-feedback-container" style="position: relative; width: 100%; height: 50px;"></div>
+                </div>
+
+
+                <div class="energy-bar-container">
+                    <div class="energy-label">⚡️ Energy: <span id="energy-level">0</span> / <span id="energy-max">0</span></div>
+                    <div class="energy-bar">
+                        <div id="energy-bar-fill" class="energy-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Section -->
+            <div id="task-section" class="section">
+                <h2>🚀 Tasks</h2>
+                <p>Complete tasks to earn more points!</p>
+                <ul>
+                    <li>Follow us on X (Twitter) - <button>Check</button></li>
+                    <li>Join our Telegram Channel - <button>Check</button></li>
+                    <li>Invite 3 Friends - <button>Check</button></li>
+                    <li>Daily Check-in - <button>Claim</button></li>
+                </ul>
+                 <p><i>(Task functionality not implemented yet)</i></p>
+            </div>
+
+            <!-- Withdraw Section -->
+            <div id="withdraw-section" class="section">
+                <h2>💸 Withdraw</h2>
+                <p>Withdraw your earned points to your wallet.</p>
+                <p>Your current balance: <strong id="withdraw-points">0</strong> points</p>
+                <div>
+                    <label for="wallet-address">Your Wallet Address:</label><br>
+                    <input type="text" id="wallet-address" placeholder="Enter your wallet address" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: #eee;">
+                </div>
+                <button>Withdraw Points</button>
+                <p style="margin-top: 15px;"><i>(Withdrawal functionality not implemented yet. Minimum withdrawal amount may apply.)</i></p>
+            </div>
+        </main>
+
+        <!-- Navigation Bar -->
+        <nav>
+            <button data-section="profile-section">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                Profile
+            </button>
+            <button data-section="tap-section" class="active">
+                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.61 13.61C14.88 16.34 13.5 17 12 17s-2.88-.66-3.61-1.39C7.61 14.88 7 13.5 7 12s.61-2.88 1.39-3.61C9.12 7.66 10.5 7 12 7s2.88.66 3.61 1.39C16.39 9.12 17 10.5 17 12s-.61 2.88-1.39 3.61zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                Tap
+            </button>
+            <button data-section="task-section">
+                <svg viewBox="0 0 24 24"><path d="M20.59 3.41l-1.42-1.42a1 1 0 00-1.41 0L12 7.59l-5.76-5.6a1 1 0 00-1.41 0L3.41 3.41a1 1 0 000 1.41L8.99 10l-5.58 5.18a1 1 0 000 1.41l1.42 1.42a1 1 0 001.41 0L12 16.41l5.76 5.6a1 1 0 001.41 0l1.42-1.42a1 1 0 000-1.41L15.01 10l5.58-5.18a1 1 0 000-1.41z"/></svg>
+                Tasks
+            </button>
+            <button data-section="withdraw-section">
+                <svg viewBox="0 0 24 24"><path d="M5 4v2h14V4H5zm0 10h4v6h6v-6h4l-7-7-7 7z"/></svg>
+                Withdraw
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration ---
+            const MAX_ENERGY = 500;
+            const ENERGY_REFILL_RATE_PER_SECOND = 1; // Energy points refilled per second
+            const POINTS_PER_TAP = 1;
+            const SAVE_INTERVAL_MS = 5000; // Save data every 5 seconds to reduce writes
+
+            // --- DOM Elements ---
+            const app = document.getElementById('app');
+            const sections = document.querySelectorAll('.section');
+            const navButtons = document.querySelectorAll('nav button');
+
+            // Profile Elements
+            const userNameDisplay = document.getElementById('user-name');
+            const profilePointsDisplay = document.getElementById('profile-points');
+            const profileMaxEnergyDisplay = document.getElementById('profile-max-energy');
+            const profileJoinDateDisplay = document.getElementById('profile-join-date'); // Placeholder
+
+            // Tap Section Elements
+            const pointsDisplay = document.getElementById('points-display');
+            const tapTarget = document.getElementById('tap-cat');
+            const energyLevelDisplay = document.getElementById('energy-level');
+            const energyMaxDisplay = document.getElementById('energy-max');
+            const energyBarFill = document.getElementById('energy-bar-fill');
+            const tapFeedbackContainer = document.getElementById('tap-feedback-container');
+
+            // Withdraw Section Elements
+            const withdrawPointsDisplay = document.getElementById('withdraw-points');
+
+            // --- Game State ---
+            let state = {
+                points: 0,
+                energy: MAX_ENERGY,
+                maxEnergy: MAX_ENERGY,
+                lastUpdateTimestamp: Date.now()
+            };
+
+            // --- Local Storage ---
+            const STORAGE_KEY = 'tapSwapCloneData';
+
+            function saveData() {
+                // Update timestamp before saving
+                state.lastUpdateTimestamp = Date.now();
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                    // console.log('Data saved:', state);
+                } catch (e) {
+                    console.error("Could not save data to localStorage:", e);
+                }
+            }
+
+            function loadData() {
+                try {
+                    const savedData = localStorage.getItem(STORAGE_KEY);
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        // Validate loaded data slightly
+                        if (parsedData && typeof parsedData.points === 'number' && typeof parsedData.energy === 'number') {
+                           state = { ...state, ...parsedData }; // Merge defaults with saved data
+                           // Ensure maxEnergy from config is used if it changed
+                           state.maxEnergy = MAX_ENERGY;
+                           // Clamp loaded energy to the current maxEnergy
+                           state.energy = Math.min(state.energy, state.maxEnergy);
+                           console.log('Data loaded:', state);
+                        } else {
+                            console.warn("Loaded data format invalid, using defaults.");
+                            initializeDefaultState();
+                        }
+                    } else {
+                        console.log('No saved data found, initializing defaults.');
+                        initializeDefaultState();
+                        // Attempt a first save immediately after init
+                        saveData();
+                    }
+                } catch (e) {
+                    console.error("Could not load data from localStorage:", e);
+                    initializeDefaultState();
+                }
+                 // Ensure initial energy isn't negative or over max after loading potentially old data
+                 state.energy = Math.max(0, Math.min(state.energy, state.maxEnergy));
+            }
+
+             function initializeDefaultState() {
+                 state = {
+                     points: 0,
+                     energy: MAX_ENERGY,
+                     maxEnergy: MAX_ENERGY,
+                     lastUpdateTimestamp: Date.now()
+                 };
+             }
+
+            // --- UI Update Functions ---
+            function updatePointsDisplay() {
+                const formattedPoints = Math.floor(state.points).toLocaleString();
+                pointsDisplay.textContent = formattedPoints;
+                profilePointsDisplay.textContent = formattedPoints;
+                withdrawPointsDisplay.textContent = formattedPoints;
+            }
+
+            function updateEnergyDisplay() {
+                const currentEnergy = Math.floor(state.energy);
+                energyLevelDisplay.textContent = currentEnergy;
+                energyMaxDisplay.textContent = state.maxEnergy;
+                profileMaxEnergyDisplay.textContent = state.maxEnergy; // Update profile too
+                const energyPercentage = (state.energy / state.maxEnergy) * 100;
+                energyBarFill.style.width = `${energyPercentage}%`;
+            }
+
+            function showTapFeedback(event) {
+                const feedback = document.createElement('div');
+                feedback.textContent = `+${POINTS_PER_TAP}`;
+                feedback.className = 'tap-feedback';
+
+                 // Position based on click/touch relative to the container
+                 const rect = tapFeedbackContainer.getBoundingClientRect();
+                 // Use clientX/Y from the event if available, otherwise center
+                 const clickX = event ? (event.clientX || (event.touches && event.touches[0].clientX)) : rect.left + rect.width / 2;
+                 const clickY = event ? (event.clientY || (event.touches && event.touches[0].clientY)) : rect.top + rect.height / 2;
+
+                 // Convert click coordinates to be relative to the feedback container
+                 const relativeX = clickX - rect.left;
+                 const relativeY = clickY - rect.top - 30; // Start slightly above click point
+
+                 feedback.style.left = `${relativeX}px`;
+                 feedback.style.top = `${relativeY}px`;
+                 // Random horizontal offset
+                 feedback.style.transform = `translateX(${(Math.random() - 0.5) * 30}px)`;
+
+
+                tapFeedbackContainer.appendChild(feedback);
+
+                // Animate up and fade out
+                requestAnimationFrame(() => {
+                   feedback.style.transform = `translateY(-50px) translateX(${(Math.random() - 0.5) * 30}px)`;
+                   feedback.style.opacity = '0';
+                });
+
+
+                // Remove after animation
+                setTimeout(() => {
+                    if (feedback.parentNode === tapFeedbackContainer) { // Ensure it's still there
+                       tapFeedbackContainer.removeChild(feedback);
+                    }
+                }, 600); // Match CSS transition duration
+            }
+
+
+            // --- Game Logic Functions ---
+            function handleTap(event) {
+                if (state.energy >= POINTS_PER_TAP) {
+                    state.energy -= POINTS_PER_TAP;
+                    state.points += POINTS_PER_TAP;
+
+                    updatePointsDisplay();
+                    updateEnergyDisplay(); // Update energy bar immediately
+                    showTapFeedback(event); // Show visual feedback
+
+                    // Vibrate slightly on tap if supported (Telegram feature)
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                    }
+
+                    // We don't call saveData() here directly to avoid excessive writes,
+                    // it will be handled by the periodic save interval.
+                } else {
+                    // Optional: Add feedback for no energy (e.g., shake bar)
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                         window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+                    }
+                    console.log("Not enough energy!");
+                }
+            }
+
+            function refillEnergy() {
+                const now = Date.now();
+                const elapsedSeconds = (now - state.lastUpdateTimestamp) / 1000;
+
+                if (state.energy < state.maxEnergy) {
+                    const energyToRefill = elapsedSeconds * ENERGY_REFILL_RATE_PER_SECOND;
+                    state.energy = Math.min(state.maxEnergy, state.energy + energyToRefill);
+                    updateEnergyDisplay(); // Update UI only if energy changed
+                }
+
+                state.lastUpdateTimestamp = now; // Always update timestamp
+                 // Note: saveData() is called by a separate interval
+            }
+
+            // --- Section Navigation ---
+            function showSection(sectionId) {
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                const activeSection = document.getElementById(sectionId);
+                if (activeSection) {
+                    activeSection.classList.add('active');
+                }
+
+                navButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.section === sectionId) {
+                        button.classList.add('active');
+                    }
+                });
+                // console.log(`Switched to section: ${sectionId}`);
+            }
+
+             // --- Telegram WebApp Initialization ---
+             function initializeTelegramWebApp() {
+                 try {
+                     if (window.Telegram && window.Telegram.WebApp) {
+                         Telegram.WebApp.ready();
+                         Telegram.WebApp.expand(); // Expand the WebApp to full height
+
+                         // Attempt to get user data (use unsafe for simplicity here)
+                         const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+                         if (tgUser) {
+                             userNameDisplay.textContent = tgUser.first_name || `User ${tgUser.id}`;
+                             console.log("Telegram User:", tgUser);
+                         } else {
+                             userNameDisplay.textContent = 'Guest';
+                             console.log("Telegram user data not available.");
+                         }
+
+                          // Disable bounce scroll for a more native feel
+                          Telegram.WebApp.setHeaderColor('#161625'); // Match app background
+                          Telegram.WebApp.setBackgroundColor('#161625');
+
+                         console.log("Telegram WebApp SDK Initialized");
+                     } else {
+                         console.warn("Telegram WebApp script not loaded or executed.");
+                         userNameDisplay.textContent = 'Browser User';
+                     }
+                 } catch (error) {
+                     console.error("Error initializing Telegram WebApp:", error);
+                     userNameDisplay.textContent = 'Error User';
+                 }
+             }
+
+
+            // --- Initialization ---
+            function init() {
+                console.log("Initializing App...");
+                initializeTelegramWebApp(); // Initialize Telegram integration first
+                loadData(); // Load saved state
+
+                // Calculate offline progress (energy refill)
+                refillEnergy(); // This updates energy based on time since last save
+
+                // Initial UI setup
+                updatePointsDisplay();
+                updateEnergyDisplay();
+
+                // Event Listeners
+                tapTarget.addEventListener('click', handleTap);
+                 // Add touchstart for potentially faster feedback on mobile, but ensure 'click' still fires
+                 tapTarget.addEventListener('touchstart', (e) => {
+                     // Optional: slightly different feedback on touch?
+                     // handleTap(e); // Can cause double taps if click also fires
+                 }, { passive: true });
+
+
+                navButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        showSection(button.dataset.section);
+                    });
+                });
+
+                // Start Energy Refill Interval (every second)
+                setInterval(refillEnergy, 1000);
+
+                // Start Periodic Save Interval
+                setInterval(saveData, SAVE_INTERVAL_MS);
+
+                // Set initial active section (Tap)
+                showSection('tap-section');
+
+                 // Make sure the app container is visible
+                 app.style.visibility = 'visible';
+                 app.style.opacity = '1';
+
+
+                console.log("App Initialized.");
+            }
+
+            // --- Prevent App visibility until initialized ---
+            app.style.visibility = 'hidden';
+            app.style.opacity = '0';
+            app.style.transition = 'opacity 0.3s ease-in-out';
+
+            // --- Start the app ---
+            init();
+        });
+    </script>
+
+</body>
+</html>
